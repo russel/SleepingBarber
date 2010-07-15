@@ -12,9 +12,9 @@
 //
 //  This is only one of a potentially infinite number of correct versions.
 
-@Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.10-beta-1-SNAPSHOT' )
+@Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.10' )
 
-import groovyx.gpars.actor.PooledActorGroup
+import groovyx.gpars.group.DeafultPGroup
 
 class Customer {
   final Integer id
@@ -31,7 +31,7 @@ class SuccessfulCustomer {
   public SuccessfulCustomer ( final Customer c ) { customer = c }
 }
 
-def group = new PooledActorGroup ( )
+def group = new DefaultPGroup ( )
 def barbersShop
 def barber = group.reactor { message ->
   assert message instanceof PendingCustomer
