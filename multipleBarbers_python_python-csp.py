@@ -4,7 +4,7 @@
 #  This is a model of the "The Sleeping Barber" problem,
 #  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009 Russel Winder
+#  Copyright © 2009-10 Russel Winder
 
 #  The barber's shop and the barber are modelled with processes.  Channels are used to pass customer objects
 #  from the shop to the barber.  The current arrangement assumes there is only one barber.
@@ -35,20 +35,20 @@ class SuccessfulCustomer ( object ) :
         self.customer = customer
 
 @process
-def barber ( shopChannel , identity , hairTrimTime , _process = None ) :
+def barber ( shopChannel , identity , hairTrimTime ) :
     def _message ( message ) :
-        print  'Barber' , identity , ':' , message
+        print  ( 'Barber ' + str ( identity ) + ' : ' + str ( message ) )
     _message ( 'Starting work.' )
     while True :
         customer = shopChannel.read ( )
         assert type ( customer ) == Customer
-        _message ( 'Starting on Customer ' + str ( customer.id ) )
+        _message ( 'Starting Customer ' + str ( customer.id ) )
         time.sleep ( random.random ( ) * 0.6 + 0.1 )
-        _message ( 'Finished Customer' + str ( customer.id ))
+        _message ( 'Finished Customer ' + str ( customer.id ))
         shopChannel.write ( SuccessfulCustomer ( customer ) )
 
 @process
-def shop ( worldChannel , barberChannel , waitingSeatCount , barberCount , hairTrimTime , _process = None ) :
+def shop ( worldChannel , barberChannel , waitingSeatCount ) :
     seatsTaken = 0
     customerProcessed = 0
     customersRejected = 0
@@ -63,26 +63,27 @@ def shop ( worldChannel , barberChannel , waitingSeatCount , barberCount , hairT
         if type ( event ) == Customer :
             if seatsTaken < 4 :
                 seatsTaken += 1
-                print 'Shop : Customer' , event.id , 'takes a seat.' , seatTaken , 'seats taken.'
+                print ( 'Shop : Customer ' + str( event.id ) + ' takes a seat. ' + str ( seatTaken ) + ' seats taken.' )
                 barberChannel.write ( event )
             else :
                 customersRejected += 1
-                print 'Shop : Customer' , event.id , 'turned away.'
+                print ( 'Shop : Customer ' + str ( event.id ) + ' turned away.' )
         elif type ( event ) == SuccessfulCustomer :
             customer = event.customer
             assert type ( customer ) == Customer
             self.seatsTaken -= 1
             self.customersProcessed += 1
-            print 'Shop : Customer' , customer.id , 'leaving trimmed.'
+            print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
             if ( not self.isOpen ) and ( self.seatsTaken == 0 ) :
-                print 'Processed' ,  self.customersProcessed , 'customers and rejected' , self.customersRejected , 'today.'
+                print ( 'Processed ' + str ( self.customersProcessed ) + ' customers and rejected ' + str ( self.customersRejected ) + ' today.' )
                 self.barber.terminate ( )
                 return
         elif type ( event ) == str : self.isOpen = False
-        else : raise ValueError , 'Object of unexpected type received.'
+        else : raise ValueError ( 'Object of unexpected type received.' )
 
 @process
-def world ( channel , _process = None ) :
+def world ( channel ) :
+    #  In Python 2 would use xrange here but use range for Python 3 compatibility.
     for i in range ( 20 ) :
         time.sleep ( random.random ( ) * 0.2 + 0.1 )
         channel.write ( Customer ( i ) )
@@ -91,7 +92,7 @@ def world ( channel , _process = None ) :
 def main ( numberOfWaitingSeats , numberOfBarbers , numberOfCustomers , nextCustomerWaitTime , hairTrimTime ) :
     barberChannel = Channel ( )
     worldChannel = Channel ( )
-    Par ( barber ( barberChannel ) , shop ( worldChannel , barberChannel ) , world ( worldChannel ) ).start ( )
+    Par ( shop ( worldChannel , barberChannel , numberOfWaitingSeats ) , world ( worldChannel ) ,  * [ barber ( barberChannel , i , hairTrimTime ) for i in range ( numberOfBarbers ) ] ).start ( )
 
 if __name__ == '__main__' :
      main ( 8 , 4 , 1000 , lambda : random.random ( ) * 0.0002 + 0.0001 , lambda : random.random ( ) * 0.0008 + 0.0001 )
