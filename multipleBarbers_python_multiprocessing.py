@@ -4,19 +4,28 @@
 #  This is a model of the "The Sleeping Barber" problem,
 #  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009 Russel Winder
+#  Copyright © 2009-10 Russel Winder
 
 #  The barber's shop is modelled as a process with an event queue, it receives events from the outside world
 #  (new customers arriving) and from the barbers (customers with fully trimmed barnets).  The waiting chairs
 #  are modelled as a common queue to which all the barbers have shared access.  Barbers are modelled with a
-#  process getting clients from the queue -- a blocking read models being asleep in the cutting chair when not
-#  actively processing a customer. In effect this is an Actor Model reactor approach with each process using
-#  a blocking read on its event queue but with barbers sharing a queue.
+#  process getting clients from the queue -- a blocking read models being asleep in the cutting chair when
+#  not actively processing a customer. In effect this is an Actor Model reactor approach with each process
+#  using a blocking read on its event queue but with barbers sharing a queue.  Because we are using what is
+#  effectively an Actor Model approach we have to use case classes so as to carry appropriate infomration in
+#  the messages sent to the shop process.
+
+#  This should work with both Python 2 and Python 3.  Use range everywhere, even where with Python 2 xrange
+#  would be preferred so as to ensure it all works with both versions.
 
 import multiprocessing
-import time
 import random
-import Queue
+import time
+
+try :
+    import queue # Python 3
+except :
+    import Queue as queue # Python 2
 
 class Customer ( object ) :
     def __init__ ( self , id ) :
@@ -35,13 +44,13 @@ class Barber ( multiprocessing.Process ) :
         self._message ( 'Starting work.' )
         self.start ( )
     def _message ( self , message ) :
-        print  'Barber' , self.identity , ':' , message
+        print  ( 'Barber ' + str ( self.identity ) + ' : ' + str ( message ) )
     def run ( self ) :
         while True :
             self._message ( 'Awaiting a customer.' )
             customer = self.shop.waitingSeats.get ( )
             assert type ( customer ) == Customer
-            self._message ( 'Starting on Customer ' + str ( customer.id ) )
+            self._message ( 'Starting Customer ' + str ( customer.id ) )
             time.sleep ( self.hairTrimTime ( ) )
             self._message ( 'Finished Customer ' + str ( customer.id ) )
             self.shop.queue.put ( SuccessfulCustomer ( customer ) )
@@ -64,27 +73,27 @@ class BarbersShop ( multiprocessing.Process ) :
             event = self.queue.get ( )
             if type ( event ) == Customer :
                 if not self.isOpen :
-                    print 'Shop : Sorry we are closed. Customer' , event.id
+                    print ( 'Shop : Sorry we are closed. Customer' + str ( event.id ) )
                 else :
                     self.customersArrived += 1
                     try :
                         self.waitingSeats.put_nowait ( event )
-                        print 'Shop : Customer' , event.id , 'takes a seat.' , self.waitingSeats.qsize ( ) , 'in use.'
-                    except Queue.Full :
+                        print ( 'Shop : Customer ' + str ( event.id ) + ' takes a seat. ' + str ( self.waitingSeats.qsize ( ) ) + ' in use.' )
+                    except queue.Full :
                         self.customersRejected += 1
-                        print 'Shop : Customer' , event.id , 'turned away.'
+                        print ( 'Shop : Customer ' + str ( event.id ) + ' turned away.' )
             elif type ( event ) == SuccessfulCustomer :
                 customer = event.customer
                 assert type ( customer ) == Customer
                 self.customersProcessed += 1
-                print 'Shop : Customer' , customer.id , 'leaving trimmed.'
+                print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
                 if ( not self.isOpen ) and ( self.customersRejected + self.customersProcessed == self.customersArrived ) :
                     assert self.queue.empty ( )
                     for barber in self.barbers : barber.terminate ( )
-                    print 'Processed' ,  self.customersProcessed , 'customers and rejected' , self.customersRejected , 'today.'
+                    print ( 'Processed ' +  str ( self.customersProcessed ) + ' customers and rejected ' + str ( self.customersRejected ) + ' today.' )
                     return
             elif type ( event ) == str : self.isOpen = False
-            else : raise ValueError , 'Object of unexpected type received.'
+            else : raise ValueError ( 'Object of unexpected type received.' )
 
 def main ( numberOfWaitingSeats , numberOfBarbers , numberOfCustomers , nextCustomerWaitTime , hairTrimTime ) :
     shop = BarbersShop ( numberOfWaitingSeats , numberOfBarbers , hairTrimTime )
@@ -92,8 +101,6 @@ def main ( numberOfWaitingSeats , numberOfBarbers , numberOfCustomers , nextCust
         time.sleep ( nextCustomerWaitTime ( ) )
         shop.queue.put ( Customer ( i ) )
     shop.queue.put ( '' )
-    shop.queue.put ( Customer ( i + 1 ) )
-    shop.queue.put ( Customer ( i + 2 ) )
     shop.join ( )
 
 if __name__ == '__main__' :
