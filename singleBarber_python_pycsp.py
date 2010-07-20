@@ -15,7 +15,8 @@
 import time
 import random
 
-from pycsp.processes import process , retire , poison , Channel , Parallel , AltSelect , InputGuard , ChannelPoisonException
+from pycsp.processes import ( process , retire , poison , Channel , Parallel , AltSelect ,
+                              InputGuard , OutputGuard , TimeoutGuard , ChannelPoisonException )
 
 class Customer ( object ) :
     def __init__ ( self , id ) :
@@ -24,6 +25,7 @@ class Customer ( object ) :
 @process
 def barber ( hairTrimTime , fromShopIn , toShopOut ) :
     while True :
+        #  Barber blocks awaiting customers from the shop, this is "sleeping in his chair".
         customer = fromShopIn ( )
         assert type ( customer ) == Customer
         print ( 'Barber : Starting Customer ' + str ( customer.id ) )
@@ -32,35 +34,39 @@ def barber ( hairTrimTime , fromShopIn , toShopOut ) :
         toShopOut ( customer )
 
 @process
-def shopIn ( fromWorld , toBarber , toAccounts , fromShopOut ) :
-    seatsTaken = 0
+def shopIn ( fromWorld , toBarber , toAccounts ) :
+    seats = [ ]
+    def trySendingToBarber ( customer ) :
+        channel , message = AltSelect ( OutputGuard ( toBarber , msg = seats[0] ) , TimeoutGuard ( seconds = 0.1 ) )
+        if channel == toBarber : del customer
     try :
         while True :
-            channel , customer = AltSelect ( InputGuard ( fromWorld ) , InputGuard ( fromShopOut ) )
+            customer = fromWorld ( )
             assert type ( customer ) == Customer
-            if channel == fromWorld :
-                if seatsTaken < 4 :
-                    seatsTaken += 1
-                    print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( seatsTaken ) + ' seat(s) taken.' )
-                    toBarber ( customer )
-                else :
-                    print ( 'Shop : Customer ' + str ( customer.id ) + ' turned away.' )
-                    toAccounts ( customer )
-            elif channel == fromShopOut :
-                seatsTaken -= 1
+            if len ( seats ) < 4 :
+                seats.append ( customer )
+                print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( len ( seats ) ) + ' seat(s) taken.' )
+                channel , message = AltSelect ( OutputGuard ( toBarber , msg = seats[0] ) , TimeoutGuard ( seconds = 0.1 ) )
+                if channel == toBarber : seats = seats[1:]
             else :
-                raise ValueError ( 'ShopIn failed to do the right thing.' )
+                if len ( seats ) > 0 :
+                    channel , message = AltSelect ( OutputGuard ( toBarber , msg = seats[0] ) , TimeoutGuard ( seconds = 0.1 ) )
+                    if channel == toBarber : seats = seats[1:]
+                print ( 'Shop : Customer ' + str ( customer.id ) + ' turned away.' )
+                toAccounts ( customer )
     except ChannelPoisonException :
-        poison ( toAccounts )
+        while ( len ( seats ) > 0 ) :
+            toBarber ( seats[0] )
+            seats = seats[1:]
+        poison ( toBarber )
 
 @process
-def shopOut ( fromBarber , toAccounts , toShopIn ) :
+def shopOut ( fromBarber , toAccounts ) :
     while True :
         customer = fromBarber ( )
         assert type ( customer ) == Customer
         print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
         toAccounts ( customer )
-        #toShopIn ( customer )
 
 @process
 def accounts ( fromShopIn , fromShopOut ) :
@@ -77,7 +83,6 @@ def accounts ( fromShopIn , fromShopOut ) :
                 raise ValueError ( 'Incorrect return from AltSelect.' )
     except ChannelPoisonException :
         print ( 'Processed ' + str ( rejectedCustomers + trimmedCustomers ) + ' customers and rejected ' + str ( rejectedCustomers ) + ' today.' )
-        print ( 'Find a sensible way of terminating all the processes.' )
 
 @process
 def world ( numberOfCustomers , customerArrivalTime , toShopIn ) :
@@ -95,8 +100,8 @@ def main ( numberOfCustomers , customerArrivalTime , hairTrimTime ) :
     shopOutToAccounts = Channel ( )
     Parallel (
         barber ( hairTrimTime , toBarber.reader ( ) , toShopOut.writer ( ) ) ,
-        shopIn ( worldToShopIn.reader ( ) , toBarber.writer ( ) , shopInToAccounts.writer ( ) , shopOutToShopIn.reader ( ) ) ,
-        shopOut ( toShopOut.reader ( ) , shopOutToAccounts.writer ( ) , shopOutToShopIn.writer ( ) ) ,
+        shopIn ( worldToShopIn.reader ( ) , toBarber.writer ( ) , shopInToAccounts.writer ( ) ) ,
+        shopOut ( toShopOut.reader ( ) , shopOutToAccounts.writer ( ) ) ,
         accounts ( shopInToAccounts.reader ( ) , shopOutToAccounts.reader ( ) ) ,
         world ( numberOfCustomers , customerArrivalTime , worldToShopIn.writer ( ) ) ,
         )
