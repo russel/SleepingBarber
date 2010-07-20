@@ -10,8 +10,12 @@
 //
 //  This is only one of a potentially infinite number of correct versions.
 
+//  As at 2010-07-14 23:30+01:00 this code sucks.  CSP channels are synchronous so we can't use the object
+//  message structure we would with actors.  Currently there is global data and this makes things totally
+//  unsafe and very un-CSP.
+
 @Grab ( group = 'org.codehaus.jcsp' , module = 'jcsp' , version = '1.1-rc5-SNAPSHOT' )
-@Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.10-beta-1-SNAPSHOT' )
+@Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.10' )
 
 import org.jcsp.lang.Channel
 import org.jcsp.lang.CSProcess
@@ -24,60 +28,65 @@ class Customer {
   public Customer ( final int i ) { id = i }
 }
 
-final worldToShopChannel = Channel.one2one ( )
-final shopToBarberChannel = Channel.one2one ( )
-final barberToShopChannel = Channel.one2one ( )
+final worldToShopInChannel = Channel.one2one ( )
+final shopInToBarberChannel = Channel.one2one ( )
+final barberToShopOutChannel = Channel.one2one ( )
 
 final barber = new CSProcess ( ) {
   public void run ( ) {
+    def inChannel = shopInToBarberChannel.in ( )
+    def outChannel = barberToShopOutChannel.out ( )
     while ( true ) {
-      def customer = shopToBarberChannel.in ( ).read ( )
+      def customer = inChannel.read ( )
       assert customer instanceof Customer
       println ( 'Barber : Starting with Customer ' + customer.id )
       Thread.sleep ( ( Math.random ( ) * 600 + 100 ) as int )
       println ( 'Barber : Finished with Customer ' + customer.id )
-      barberToShopChannel.out ( ).write ( customer )
+      outChannel.write ( customer )
     }
   }
 }
 
-final barbersShop = new CSProcess ( ) {
+def seatsTaken = 0
+def customersRejected = 0
+def customersProcessed = 0
+def isOpen = true
+
+final barbersShopIn = new CSProcess ( ) {
   public void run ( ) {
-    def seatsTaken = 0
-    def isOpen = true
-    def customersRejected = 0
-    def customersProcessed = 0
-    def channelList =  [ worldToShopChannel , barberToShopChannel ]
-    def channelSelector = new ALT ( channelList )
+    def inChannel = worldToShopInChannel.in ( )
+    def outChannel = shopInToBarberChannel.out ( )
     while ( true ) {
-      def channel = channelList [ channelSelector.fairSelect ( worldToShopChannel , barberToShopChannel ) ]
-      def message = channel.in ( ).read ( )
-      switch ( channel ) {
-       case worldToShopChannel :
-         if ( message == '' ) { isOpen = false }
-         else {
-           assert message instanceof Customer
-           if ( seatsTaken < 4 ) {
-             ++seatsTaken
-             println ( 'Shop : Customer ' + message.id + ' takes a seat. ' + seatsTaken + ' in use.' )
-             shopToBarberChannel.out ( ).write ( message )
-           }
-           else {
-             println ( 'Shop : Customer ' + message.id + ' turned away.' )
-             ++customersRejected
-           }
-         }
-         break
-       case barberToShopChannel :
-         assert message instanceof Customer
-         --seatsTaken
-         ++customersProcessed
-         println ( 'Shop : Customer ' + message.customer.id + ' leaving trimmed.' )
-         if ( ! isOpen && ( seatsTaken == 0 ) ) {
-           println ( 'Processed ' + customersProcessed + ' customers and rejected ' + customersRejected + ' today.' )
-           stop ( )
-         }
-         break
+      def message = inChannel.read ( )
+      if ( message == '' ) { isOpen = false }
+      else {
+        assert message instanceof Customer
+        if ( seatsTaken < 4 ) {
+          ++seatsTaken
+          println ( 'Shop : Customer ' + message.id + ' takes a seat. ' + seatsTaken + ' in use.' )
+          outChannel.write ( message )
+        }
+        else {
+          println ( 'Shop : Customer ' + message.id + ' turned away.' )
+          ++customersRejected
+        }
+      }
+    }
+  }
+}
+
+final barbersShopOut = new CSProcess ( ) {
+  public void run ( ) {
+    def inChannel = barberToShopOutChannel.in ( )
+    while ( true ) {
+      def message = inChannel.read ( )
+      assert message instanceof Customer
+      --seatsTaken
+      ++customersProcessed
+      println ( 'Shop : Customer ' + message.id + ' leaving trimmed.' )
+      if ( ! isOpen && ( seatsTaken == 0 ) ) {
+        println ( 'Processed ' + customersProcessed + ' customers and rejected ' + customersRejected + ' today.' )
+        stop ( )
       }
     }
   }
@@ -85,12 +94,14 @@ final barbersShop = new CSProcess ( ) {
 
 final world = new CSProcess ( ) {
   public void run ( ) {
+    def toShopChannel = worldToShopInChannel.out ( )
     for ( number in 0 ..< 20 ) {
       Thread.sleep ( ( Math.random ( ) * 200 + 100 ) as int )
-      worldToShopChannel.out ( ).write ( new Customer ( number ) )
+      println ( 'World: Sending in new customer.' )
+      toShopChannel.write ( new Customer ( number ) )
     }
-    worldToShopChannel.out ( ).write ( '' )
+    toShopChannel.write ( '' )
   }
 }
 
-new PAR ( [ barber , barbersShop , world ] ).run ( )
+new PAR ( [ barber , barbersShopIn , barbersShopOut , world ] ).run ( )
