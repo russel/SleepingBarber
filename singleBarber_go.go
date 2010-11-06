@@ -1,5 +1,5 @@
-//  This is a model of the "The Sleeping Barber" problem
- //  (cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem) in Go (http://go-lang.org).
+//  This is a model of the "The Sleeping Barber" problem using Go (http://go-lang.org),
+ //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
 //  Copyright © 2010 Russel Winder
 
@@ -77,5 +77,8 @@ func world ( numberOfCustomers , numberOfSeats int , nextCustomerWaitTime , hair
 }
 
 func main ( ) {
-	world ( 20 , 4 , func ( ) int64 { return int64 ( rand.Float ( )  * 2000000 ) + 1000000 } ,  func ( ) int64 { return int64 ( rand.Float ( )  * 6000000 ) + 1000000 } )
+	world ( 20 , 4 ,
+		func ( ) int64 { return int64 ( rand.Float ( )  * 2000000 ) + 1000000 } ,
+		func ( ) int64 { return int64 ( rand.Float ( )  * 6000000 ) + 1000000 }
+	)
 }
