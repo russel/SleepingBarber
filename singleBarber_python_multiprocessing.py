@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 # -*- mode:python; coding:utf-8; -*-
 
-#  This is a model of the "The Sleeping Barber" problem
-#  (cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem) in Python (http://www.python.org).
+#  This is a model of the "The Sleeping Barber" problem using Python and the multiprocessing package,
+#  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
 #  Copyright © 2009-10 Russel Winder
 
