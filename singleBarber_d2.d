@@ -41,7 +41,7 @@ void barber ( long function ( ) hairTrimTime ) {
 }
 
 void shop ( int numberOfSeats , Tid world , Tid barber ) {
-  auto shopOpen = true ;
+  auto isOpen = true ;
   auto seatsFilled = 0 ;
   auto customersTurnedAway = 0 ;
   auto customersTrimmeds = 0 ;
@@ -64,12 +64,12 @@ void shop ( int numberOfSeats , Tid world , Tid barber ) {
                customersTrimmeds++ ;
                seatsFilled-- ;
                writeln ( "Shop : Customer " , customer.customer.id , " leaving trimmed." ) ;
-               if ( ! shopOpen && ( seatsFilled == 0 ) ) {
+               if ( ! isOpen && ( seatsFilled == 0 ) ) {
                  writeln ( "\nTrimmed " , customersTrimmeds , " and turned away " , customersTurnedAway , " today.\n" ) ;
                  world.send ( "" ) ;
                }
              } ,
-             ( string s ) { shopOpen = false ; } ,
+             ( string s ) { isOpen = false ; } ,
              ( OwnerTerminated ) { running = false ; }
              ) ;
   }

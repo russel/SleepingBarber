@@ -28,7 +28,7 @@ func barber ( hairTrimTime func ( ) int64 , fromShopChannel , toShopChannel chan
 }
 
 func shop ( numberOfSeats int , fromWorldChannel , toWorldChannel , fromBarberChannel , toBarberChannel chan *Customer ) {
-	shopOpen := true
+	isOpen := true
 	seatsFilled := 0
 	customersTurnedAway := 0
 	customersTrimmed := 0
@@ -37,7 +37,7 @@ func shop ( numberOfSeats int , fromWorldChannel , toWorldChannel , fromBarberCh
 		select {
 		case customer = <- fromWorldChannel :
 			if customer.id == -1 {
-				shopOpen = false
+				isOpen = false
 			} else {
 				if seatsFilled <= numberOfSeats {
 					seatsFilled++
@@ -52,7 +52,7 @@ func shop ( numberOfSeats int , fromWorldChannel , toWorldChannel , fromBarberCh
 			customersTrimmed++
 			seatsFilled--
 			fmt.Printf ( "Shop : Customer %d leaving trimmed.\n" , customer.id )
-			if ! shopOpen && ( seatsFilled == 0 ) {
+			if ! isOpen && ( seatsFilled == 0 ) {
 				fmt.Printf ( "\nTrimmed %d and turned away %d today.\n" ,  customersTrimmed , customersTurnedAway )
 				toWorldChannel <- & Customer { -1 }
 			}
