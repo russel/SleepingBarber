@@ -28,23 +28,23 @@ func barber ( hairTrimTime func ( ) int64 , fromShopChannel , toShopChannel chan
 }
 
 func shop ( numberOfSeats int , fromWorldChannel , toWorldChannel , fromBarberChannel , toBarberChannel chan *Customer ) {
-	shopClosing := false
+	shopOpen := true
 	seatsFilled := 0
-	customersRejected := 0
+	customersTurnedAway := 0
 	customersTrimmed := 0
 	for {
 		var customer *Customer
 		select {
 		case customer = <- fromWorldChannel :
 			if customer.id == -1 {
-				shopClosing = true
+				shopOpen = false
 			} else {
 				if seatsFilled <= numberOfSeats {
 					seatsFilled++
 					fmt.Printf ( "Shop : Customer %d takes a seat. %d in use .\n" , customer.id , seatsFilled )
 					toBarberChannel <- customer
 				} else {
-					customersRejected++
+					customersTurnedAway++
 					fmt.Printf ( "Shop : Customer %d turned away.\n" , customer.id )
 				}
 			}
@@ -52,8 +52,8 @@ func shop ( numberOfSeats int , fromWorldChannel , toWorldChannel , fromBarberCh
 			customersTrimmed++
 			seatsFilled--
 			fmt.Printf ( "Shop : Customer %d leaving trimmed.\n" , customer.id )
-			if shopClosing && ( seatsFilled == 0 ) {
-				fmt.Printf ( "\nTrimmed %d customers and rejected %d today.\n" ,  customersTrimmed , customersRejected )
+			if ! shopOpen && ( seatsFilled == 0 ) {
+				fmt.Printf ( "\nTrimmed %d and turned away %d today.\n" ,  customersTrimmed , customersTurnedAway )
 				toWorldChannel <- & Customer { -1 }
 			}
 		}
@@ -78,7 +78,7 @@ func world ( numberOfCustomers , numberOfSeats int , nextCustomerWaitTime , hair
 
 func main ( ) {
 	world ( 20 , 4 ,
-		func ( ) int64 { return int64 ( rand.Float ( )  * 2000000 ) + 1000000 } ,
-		func ( ) int64 { return int64 ( rand.Float ( )  * 6000000 ) + 1000000 }
+		func ( ) int64 { return int64 ( rand.Float ( )  * 200000 ) + 100000 } ,
+		func ( ) int64 { return int64 ( rand.Float ( )  * 600000 ) + 100000 } ,
 	)
 }

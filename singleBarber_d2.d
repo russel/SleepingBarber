@@ -41,10 +41,10 @@ void barber ( long function ( ) hairTrimTime ) {
 }
 
 void shop ( int numberOfSeats , Tid world , Tid barber ) {
-  auto shopClosing = false ;
+  auto shopOpen = true ;
   auto seatsFilled = 0 ;
-  auto customersRejected = 0 ;
-  auto customersTrimmed = 0 ;
+  auto customersTurnedAway = 0 ;
+  auto customersTrimmeds = 0 ;
   auto running = true ;
   barber.send ( thisTid ) ;
   while ( running ) {
@@ -56,21 +56,21 @@ void shop ( int numberOfSeats , Tid world , Tid barber ) {
                  barber.send ( customer ) ;
                }
                else {
-                 customersRejected++ ;
+                 customersTurnedAway++ ;
                  writeln ( "Shop : Customer " , customer.id , " turned away." ) ;
                }
              } ,
              ( SuccessfulCustomer customer ) {
-               customersTrimmed++ ;
+               customersTrimmeds++ ;
                seatsFilled-- ;
                writeln ( "Shop : Customer " , customer.customer.id , " leaving trimmed." ) ;
-               if ( shopClosing && ( seatsFilled == 0 ) ) {
-                 writeln ( "\nTrimmed " , customersTrimmed , " customers and rejected " , customersRejected , " today.\n" ) ;
+               if ( ! shopOpen && ( seatsFilled == 0 ) ) {
+                 writeln ( "\nTrimmed " , customersTrimmeds , " and turned away " , customersTurnedAway , " today.\n" ) ;
                  world.send ( "" ) ;
                }
              } ,
-             ( string s ) { shopClosing = true ; } ,
-             (OwnerTerminated ) { running = false ; }
+             ( string s ) { shopOpen = false ; } ,
+             ( OwnerTerminated ) { running = false ; }
              ) ;
   }
 }
@@ -90,6 +90,6 @@ void world ( int numberOfCustomers , int numberOfSeats , long function ( )  next
 void main ( string[] args ) {
   world ( 20 , 4 ,
           function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 200000 ) + 100000 ; } ,
-          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 800000 ) + 100000 ; }
+          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 600000 ) + 100000 ; }
           ) ;
 }
