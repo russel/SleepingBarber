@@ -39,14 +39,14 @@ class Barber ( multiprocessing.Process ) :
             print ( 'Barber : Finished Customer ' + str ( customer.id ) )
             self.shop.queue.put ( SuccessfulCustomer ( customer ) )
 
-class BarbersShop ( multiprocessing.Process ) :
-    def __init__ ( self , numberOfSeats , hairTrimTime ) :
-        super ( BarbersShop , self ).__init__ ( )
-        self.numberOfSeats = numberOfSeats
+class Shop ( multiprocessing.Process ) :
+    def __init__ ( self , numberOfWaitingSeats , hairTrimTime ) :
+        super ( Shop , self ).__init__ ( )
+        self.numberOfWaitingSeats = numberOfWaitingSeats
         self.queue = multiprocessing.Queue ( )
         self.seatsTaken = 0
         self.customersTrimmed = 0
-        self.customersRejected = 0
+        self.customersTurnedAway = 0
         self.isOpen = True
         self.barber = Barber ( self , hairTrimTime )
         self.start ( )
@@ -54,12 +54,12 @@ class BarbersShop ( multiprocessing.Process ) :
         while True :
             event = self.queue.get ( )
             if type ( event ) == Customer :
-                if self.seatsTaken < self.numberOfSeats :
+                if self.seatsTaken < self.numberOfWaitingSeats :
                     self.seatsTaken += 1
                     print ( 'Shop : Customer ' + str ( event.id ) + ' takes a seat. ' + str ( self.seatsTaken ) + ' in use.' )
                     self.barber.queue.put ( event )
                 else :
-                    self.customersRejected += 1
+                    self.customersTurnedAway += 1
                     print ( 'Shop : Customer ' + str ( event.id ) +' turned away.' )
             elif type ( event ) == SuccessfulCustomer :
                 customer = event.customer
@@ -68,18 +68,18 @@ class BarbersShop ( multiprocessing.Process ) :
                 self.customersTrimmed += 1
                 print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
                 if ( not self.isOpen ) and ( self.seatsTaken == 0 ) :
-                    print ( '\nTrimmed ' + str ( self.customersTrimmed ) + ' customers and rejected ' + str ( self.customersRejected ) + ' today.' )
+                    print ( '\nTrimmed ' + str ( self.customersTrimmed ) + ' and turned away ' + str ( self.customersTurnedAway ) + ' today.' )
                     self.barber.terminate ( )
                     return
             elif type ( event ) == str : self.isOpen = False
             else : raise ValueError ( 'Object of unexpected type received.' )
 
-def world ( numberOfCustomers , numberOfSeats , nextCustomerWaitTime , hairTrimTime ) :
-    shop = BarbersShop ( numberOfSeats , hairTrimTime )
+def world ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
+    shop = Shop ( numberOfWaitingSeats , hairTrimTime )
     #  In Python 2 would use xrange here but use range for Python 3 compatibility.
     for i in range ( numberOfCustomers ) :
         time.sleep ( nextCustomerWaitTime ( ) )
-        print ( 'Customer ' + str ( i ) + ' enters the shop.' )
+        print ( 'World : Customer ' + str ( i ) + ' enters the shop.' )
         shop.queue.put ( Customer ( i ) )
     shop.queue.put ( '' )
     shop.join ( )

@@ -24,7 +24,6 @@ class Customer ( object ) :
 @process
 def barber ( hairTrimTime , fromShopIn , toShopOut ) :
     while True :
-        #  Barber blocks awaiting customers from the shop, this is "sleeping in his chair".
         customer = fromShopIn.read ( )
         assert type ( customer ) == Customer
         print ( 'Barber : Starting Customer ' + str ( customer.id ) )
@@ -33,19 +32,18 @@ def barber ( hairTrimTime , fromShopIn , toShopOut ) :
         toShopOut.write ( customer )
 
 @process
-def shopIn ( fromWorld , toBarber , toAccounts , fromShopOut ) :
+def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts , fromShopOut ) :
     seatsTaken = 0
     try :
         while True :
-            print ( 'Awaiting a customer . . .' )
+            print ( 'XXXX: Awaiting a customer . . .' )
             #alt =  Alt ( fromWorld , fromShopOut )
             #customer = alt.select ( )
             customer = fromWorld.read ( )
-            print ( 'Got customer ' + str ( customer ) )
             assert type ( customer ) == Customer
-            if seatsTaken < 4 :
+            if seatsTaken <= numberOfWaitingSeats :
                 seatsTaken += 1
-                print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( seatsTaken ) + ' seat(s) taken.' )
+                print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( seatsTaken ) + ' in use.' )
                 toBarber.write ( customer )
             else :
                 print ( 'Shop : Customer ' + str ( customer.id ) + ' turned away.' )
@@ -64,8 +62,8 @@ def shopOut ( fromBarber , toAccounts , toShopIn ) :
 
 @process
 def accounts ( fromShopIn , fromShopOut ) :
-    rejectedCustomers = 0
-    trimmedCustomers = 0
+    customersTurnedAway = 0
+    customersTrimmed = 0
     try :
         while True :
             alt = Alt ( fromShopIn , fromShopOut )
@@ -75,25 +73,26 @@ def accounts ( fromShopIn , fromShopOut ) :
             print ( 'XXXX: customer = ' + str ( customer ) )
             print ( 'XXXX: customer.id = ' + str ( customer.id ) )
             if alt.last_selected == fromShopIn :
-                rejectedCustomers += 1
+                customersTurnedAway += 1
             elif alt.last_selected == fromShopOut :
-                trimmedCustomers += 1
+                customersTrimmed += 1
             else :
                 raise ValueError ( 'Incorrect return from Alt.' )
-            print ( 'XXXX: rejectedCustomers = ' + str ( rejectedCustomers ) )
-            print ( 'XXXX: trimmedCustomers = ' + str ( trimmedCustomers ) )
+            print ( 'XXXX: customersTurnedAway = ' + str ( customersTurnedAway ) )
+            print ( 'XXXX: customersTrimmed = ' + str ( customersTrimmed ) )
     except ChannelPoison :
-        print ( 'Processed ' + str ( rejectedCustomers + trimmedCustomers ) + ' customers and rejected ' + str ( rejectedCustomers ) + ' today.' )
+        print ( '\nTrimmed ' + str ( customersTrimmed ) + ' and turned away ' + str ( customersTurnedAway ) + ' today.' )
         print ( 'Find a sensible way of terminating all the processes.' )
 
 @process
-def world ( numberOfCustomers , customerArrivalTime , toShopIn ) :
+def world ( numberOfCustomers , nextCustomerWaitTime , toShopIn ) :
     for i in range ( numberOfCustomers ) :
-        time.sleep ( customerArrivalTime ( ) )
+        time.sleep ( nextCustomerWaitTime ( ) )
+        print ( 'World : Customer ' + str ( i ) + ' enters the shop.' )
         toShopIn.write ( Customer ( i ) )
     toShopIn.poison ( )
 
-def main ( numberOfCustomers , customerArrivalTime , hairTrimTime ) :
+def main ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
     worldToShopIn = Channel ( )
     shopOutToShopIn = Channel ( )
     toBarber = Channel ( )
@@ -102,11 +101,11 @@ def main ( numberOfCustomers , customerArrivalTime , hairTrimTime ) :
     shopOutToAccounts = Channel ( )
     Par (
         barber ( hairTrimTime , toBarber , toShopOut ) ,
-        shopIn ( worldToShopIn , toBarber , shopInToAccounts , shopOutToShopIn ) ,
+        shopIn ( numberOfWaitingSeats , worldToShopIn , toBarber , shopInToAccounts , shopOutToShopIn ) ,
         shopOut ( toShopOut , shopOutToAccounts , shopOutToShopIn ) ,
         accounts ( shopInToAccounts , shopOutToAccounts ) ,
-        world ( numberOfCustomers , customerArrivalTime , worldToShopIn ) ,
+        world ( numberOfCustomers , nextCustomerWaitTime , worldToShopIn ) ,
         ).start ( )
     
 if __name__ == '__main__' :
-    main ( 20 ,  lambda : random.random ( ) * 0.2 + 0.1 , lambda : random.random ( ) * 0.6 + 0.1 )
+    main ( 20 ,  4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.006 + 0.001 )

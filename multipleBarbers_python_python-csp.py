@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # -*- mode:python; coding:utf-8; -*-
 
-#  This is a model of the "The Sleeping Barber" problem,
-#  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
+#  This is a model of the "The Sleeping Barber" problem using Python (http://www.python.org) and Python-CSP
+#  (http://code.google.com/p/python-csp/), cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
 #  Copyright © 2009-10 Russel Winder
 
@@ -35,23 +35,22 @@ class SuccessfulCustomer ( object ) :
         self.customer = customer
 
 @process
-def barber ( shopChannel , identity , hairTrimTime ) :
+def barber ( identity , hairTrimTime , shopChannel ) :
     def _message ( message ) :
         print  ( 'Barber ' + str ( identity ) + ' : ' + str ( message ) )
-    _message ( 'Starting work.' )
     while True :
         customer = shopChannel.read ( )
         assert type ( customer ) == Customer
         _message ( 'Starting Customer ' + str ( customer.id ) )
-        time.sleep ( random.random ( ) * 0.6 + 0.1 )
-        _message ( 'Finished Customer ' + str ( customer.id ))
+        time.sleep ( hairTrimTime ( ) )
+        _message ( 'Finished Customer ' + str ( customer.id ) )
         shopChannel.write ( SuccessfulCustomer ( customer ) )
 
 @process
-def shop ( worldChannel , barberChannel , waitingSeatCount ) :
+def shop ( numberOfWaitingSeats , worldChannel , barberChannel ) :
     seatsTaken = 0
     customerProcessed = 0
-    customersRejected = 0
+    customersTurnedAway = 0
     isOpen = True
     while True :
         #  One might have anticipated that alt.select ( ) would return the channel that is ready to read,
@@ -61,38 +60,42 @@ def shop ( worldChannel , barberChannel , waitingSeatCount ) :
         alt = Alt ( worldChannel , barberChannel )
         event = alt.select ( )
         if type ( event ) == Customer :
-            if seatsTaken < 4 :
+            if seatsTaken < numberOfWaitingSeats :
                 seatsTaken += 1
-                print ( 'Shop : Customer ' + str( event.id ) + ' takes a seat. ' + str ( seatTaken ) + ' seats taken.' )
+                print ( 'Shop : Customer ' + str( event.id ) + ' takes a seat. ' + str ( seatTaken ) + ' in use.' )
                 barberChannel.write ( event )
             else :
-                customersRejected += 1
+                customersTurnedAway += 1
                 print ( 'Shop : Customer ' + str ( event.id ) + ' turned away.' )
         elif type ( event ) == SuccessfulCustomer :
             customer = event.customer
             assert type ( customer ) == Customer
             self.seatsTaken -= 1
-            self.customersProcessed += 1
+            self.customersTrimmed += 1
             print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
             if ( not self.isOpen ) and ( self.seatsTaken == 0 ) :
-                print ( 'Processed ' + str ( self.customersProcessed ) + ' customers and rejected ' + str ( self.customersRejected ) + ' today.' )
+                print ( '\nTrimmed ' + str ( self.customersTrimmed ) + ' and turned away ' + str ( self.customersTurnedAway ) + ' today.' )
                 self.barber.terminate ( )
                 return
         elif type ( event ) == str : self.isOpen = False
         else : raise ValueError ( 'Object of unexpected type received.' )
 
 @process
-def world ( channel ) :
+def world ( nextCustomerWaitTime , channel ) :
     #  In Python 2 would use xrange here but use range for Python 3 compatibility.
     for i in range ( 20 ) :
-        time.sleep ( random.random ( ) * 0.2 + 0.1 )
+        time.sleep ( nextCustomerWaitTime ( ) )
         channel.write ( Customer ( i ) )
     channel.write ( '' )
 
 def main ( numberOfWaitingSeats , numberOfBarbers , numberOfCustomers , nextCustomerWaitTime , hairTrimTime ) :
     barberChannel = Channel ( )
     worldChannel = Channel ( )
-    Par ( shop ( worldChannel , barberChannel , numberOfWaitingSeats ) , world ( worldChannel ) ,  * [ barber ( barberChannel , i , hairTrimTime ) for i in range ( numberOfBarbers ) ] ).start ( )
+    Par (
+        shop ( numberOfWaitingSeats , worldChannel , barberChannel ) ,
+        world ( nextCustomerWaitTime , worldChannel ) ,
+        * [ barber ( i , hairTrimTime , barberChannel ) for i in range ( numberOfBarbers ) ]
+        ).start ( )
 
 if __name__ == '__main__' :
-     main ( 8 , 4 , 1000 , lambda : random.random ( ) * 0.0002 + 0.0001 , lambda : random.random ( ) * 0.0008 + 0.0001 )
+     main ( 8 , 4 , 1000 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.008 + 0.001 )

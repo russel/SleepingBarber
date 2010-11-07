@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 # -*- mode:python; coding:utf-8; -*-
 
-#  This is a model of the "The Sleeping Barber" problem
-#  (cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem) in Python (http://www.python.org).
+#  This is a model of the "The Sleeping Barber" problem using Python (http://www.python.org) and the
+#  mulitprocessing package, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
 #  Copyright © 2009-10 Russel Winder
 
@@ -22,6 +22,7 @@ import multiprocessing
 import random
 import time
 
+#  Must get the Full and Empty symbols as multiprocessing does define them but does use them.
 try :
     import queue # Python 3
 except :
@@ -41,13 +42,11 @@ class Barber ( multiprocessing.Process ) :
         self.shop = shop
         self.identity = identity
         self.hairTrimTime = hairTrimTime
-        self._message ( 'Starting work.' )
         self.start ( )
     def _message ( self , message ) :
         print  ( 'Barber ' + str ( self.identity ) + ' : ' + str ( message ) )
     def run ( self ) :
         while True :
-            self._message ( 'Awaiting a customer.' )
             customer = self.shop.waitingSeats.get ( )
             assert type ( customer ) == Customer
             self._message ( 'Starting Customer ' + str ( customer.id ) )
@@ -63,8 +62,8 @@ class BarbersShop ( multiprocessing.Process ) :
         self.queue = multiprocessing.Queue ( )
         self.waitingSeats = multiprocessing.Queue ( waitingSeatCount )
         self.customersArrived = 0
-        self.customersProcessed = 0
-        self.customersRejected = 0
+        self.customersTrimmed = 0
+        self.customersTurnedAway = 0
         self.isOpen = True
         self.barbers = [ Barber ( self , i , hairTrimTime ) for i in range ( barberCount ) ]
         self.start ( )
@@ -80,29 +79,30 @@ class BarbersShop ( multiprocessing.Process ) :
                         self.waitingSeats.put_nowait ( event )
                         print ( 'Shop : Customer ' + str ( event.id ) + ' takes a seat. ' + str ( self.waitingSeats.qsize ( ) ) + ' in use.' )
                     except queue.Full :
-                        self.customersRejected += 1
+                        self.customersTurnedAway += 1
                         print ( 'Shop : Customer ' + str ( event.id ) + ' turned away.' )
             elif type ( event ) == SuccessfulCustomer :
                 customer = event.customer
                 assert type ( customer ) == Customer
-                self.customersProcessed += 1
+                self.customersTrimmed += 1
                 print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
-                if ( not self.isOpen ) and ( self.customersRejected + self.customersProcessed == self.customersArrived ) :
+                if ( not self.isOpen ) and ( self.customersTurnedAway + self.customersTrimmed == self.customersArrived ) :
                     assert self.queue.empty ( )
                     for barber in self.barbers : barber.terminate ( )
-                    print ( 'Processed ' +  str ( self.customersProcessed ) + ' customers and rejected ' + str ( self.customersRejected ) + ' today.' )
+                    print ( '\nTrimmed ' +  str ( self.customersTrimmed ) + ' and turned away ' + str ( self.customersTurnedAway ) + ' today.' )
                     return
             elif type ( event ) == str : self.isOpen = False
             else : raise ValueError ( 'Object of unexpected type received.' )
 
-def main ( numberOfWaitingSeats , numberOfBarbers , numberOfCustomers , nextCustomerWaitTime , hairTrimTime ) :
+def main ( numberOfCustomers , numberOfWaitingSeats , numberOfBarbers , nextCustomerWaitTime , hairTrimTime ) :
     shop = BarbersShop ( numberOfWaitingSeats , numberOfBarbers , hairTrimTime )
     for i in range ( numberOfCustomers ) :
         time.sleep ( nextCustomerWaitTime ( ) )
+        print ( 'World : Customer ' + str ( i ) + ' enters the shop.' ) ;
         shop.queue.put ( Customer ( i ) )
     shop.queue.put ( '' )
     shop.join ( )
 
 if __name__ == '__main__' :
     #  If waiting seat count is 0 then it all goes wrong.
-    main ( 8 , 4 , 1000 , lambda : random.random ( ) * 0.0002 + 0.0001 , lambda : random.random ( ) * 0.0008 + 0.0001 )
+    main ( 1000 , 8 , 4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.008 + 0.001 )

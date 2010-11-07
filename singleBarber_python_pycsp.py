@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # -*- mode:python; coding:utf-8; -*-
 
-#  This is a model of the "The Sleeping Barber" problem using PyCSP,
-#  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
+#  This is a model of the "The Sleeping Barber" problem using Python and PyCSP
+#  (http://code.google.com/p/pycsp/), cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
 #  Copyright © 2009-10 Russel Winder
 
@@ -25,7 +25,6 @@ class Customer ( object ) :
 @process
 def barber ( hairTrimTime , fromShopIn , toShopOut ) :
     while True :
-        #  Barber blocks awaiting customers from the shop, this is "sleeping in his chair".
         customer = fromShopIn ( )
         assert type ( customer ) == Customer
         print ( 'Barber : Starting Customer ' + str ( customer.id ) )
@@ -34,7 +33,7 @@ def barber ( hairTrimTime , fromShopIn , toShopOut ) :
         toShopOut ( customer )
 
 @process
-def shopIn ( fromWorld , toBarber , toAccounts ) :
+def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts ) :
     seats = [ ]
     def trySendingToBarber ( customer ) :
         channel , message = AltSelect ( OutputGuard ( toBarber , msg = seats[0] ) , TimeoutGuard ( seconds = 0.1 ) )
@@ -43,9 +42,9 @@ def shopIn ( fromWorld , toBarber , toAccounts ) :
         while True :
             customer = fromWorld ( )
             assert type ( customer ) == Customer
-            if len ( seats ) < 4 :
+            if len ( seats ) <= numberOfWaitingSeats :
                 seats.append ( customer )
-                print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( len ( seats ) ) + ' seat(s) taken.' )
+                print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( len ( seats ) ) + ' in use.' )
                 channel , message = AltSelect ( OutputGuard ( toBarber , msg = seats[0] ) , TimeoutGuard ( seconds = 0.1 ) )
                 if channel == toBarber : seats = seats[1:]
             else :
@@ -70,28 +69,29 @@ def shopOut ( fromBarber , toAccounts ) :
 
 @process
 def accounts ( fromShopIn , fromShopOut ) :
-    rejectedCustomers = 0
-    trimmedCustomers = 0
+    customersTurnedAway = 0
+    customersTrimmed = 0
     try :
         while True :
             channel , customer = AltSelect ( InputGuard ( fromShopIn ) , InputGuard ( fromShopOut ) )
             if channel == fromShopIn :
-                rejectedCustomers += 1
+                customersTurnedAway += 1
             elif channel == fromShopOut :
-                trimmedCustomers += 1
+                customersTrimmed += 1
             else :
                 raise ValueError ( 'Incorrect return from AltSelect.' )
     except ChannelPoisonException :
-        print ( 'Processed ' + str ( rejectedCustomers + trimmedCustomers ) + ' customers and rejected ' + str ( rejectedCustomers ) + ' today.' )
+        print ( '\nTrimmed ' + str ( customersTrimmed ) + ' and turned away ' + str ( customersTurnedAway ) + ' today.' )
 
 @process
-def world ( numberOfCustomers , customerArrivalTime , toShopIn ) :
+def world ( numberOfCustomers , nextCustomerWaitTime , toShopIn ) :
     for i in range ( numberOfCustomers ) :
-        time.sleep ( customerArrivalTime ( ) )
+        time.sleep ( nextCustomerWaitTime ( ) )
+        print ( 'World : Customer ' + str ( i ) + ' enters the shop.' )
         toShopIn ( Customer ( i ) )
     poison ( toShopIn )
 
-def main ( numberOfCustomers , customerArrivalTime , hairTrimTime ) :
+def main ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
     worldToShopIn = Channel ( )
     shopOutToShopIn = Channel ( )
     toBarber = Channel ( )
@@ -100,11 +100,11 @@ def main ( numberOfCustomers , customerArrivalTime , hairTrimTime ) :
     shopOutToAccounts = Channel ( )
     Parallel (
         barber ( hairTrimTime , toBarber.reader ( ) , toShopOut.writer ( ) ) ,
-        shopIn ( worldToShopIn.reader ( ) , toBarber.writer ( ) , shopInToAccounts.writer ( ) ) ,
+        shopIn ( numberOfWaitingSeats , worldToShopIn.reader ( ) , toBarber.writer ( ) , shopInToAccounts.writer ( ) ) ,
         shopOut ( toShopOut.reader ( ) , shopOutToAccounts.writer ( ) ) ,
         accounts ( shopInToAccounts.reader ( ) , shopOutToAccounts.reader ( ) ) ,
-        world ( numberOfCustomers , customerArrivalTime , worldToShopIn.writer ( ) ) ,
+        world ( numberOfCustomers , nextCustomerWaitTime , worldToShopIn.writer ( ) ) ,
         )
     
 if __name__ == '__main__' :
-    main ( 20 ,  lambda : random.random ( ) * 0.2 + 0.1 , lambda : random.random ( ) * 0.6 + 0.1 )
+    main ( 20 ,  4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.006 + 0.001 )
