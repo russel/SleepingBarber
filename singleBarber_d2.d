@@ -89,7 +89,7 @@ void world ( int numberOfCustomers , int numberOfSeats , long function ( )  next
 
 void main ( string[] args ) {
   world ( 20 , 4 ,
-          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 200000 ) + 100000 ; } ,
-          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 600000 ) + 100000 ; }
+          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 20000 ) + 10000 ; } ,
+          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 60000 ) + 10000 ; }
           ) ;
 }
