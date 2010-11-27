@@ -1,0 +1,52 @@
+#! /usr/bin/env groovy
+
+//  This is a model of the "The Sleeping Barber" problem using Groovy (http://groovy.codehaus.org) only,
+//  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
+//
+//  Copyright © 2010 Russel Winder
+
+import java.util.concurrent.ArrayBlockingQueue
+
+class Customer {
+  final Integer id
+  public Customer ( final Integer id ) { this.id = id }
+}
+
+def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure hairTrimTime , Closure nextCustomerWaitTime ) {
+  final waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats )
+  final customersTurnedAway = 0
+  final customersTrimmed = 0
+  final barber = new Runnable ( ) {
+    private working = true
+    public void stopWork ( ) { working = false }
+    @Override public void run ( ) {
+      while ( working || ( waitingChairs.size ( ) > 0 ) ) {
+        def customer = waitingChairs.take ( )
+        println ( 'Barber : Starting Customer ' + customer.id )
+        Thread.sleep ( hairTrimTime ( ) )
+        println ( 'Barber : Finished Customer ' + customer.id )
+        ++customersTrimmed
+        println ( 'Shop : Customer ' + customer.id + ' leaving trimmed.' )
+      }
+    }
+  }
+  final barberThread = new Thread ( barber )
+  barberThread.start ( )
+  for ( int i = 0 ; i < numberOfCustomers ; ++i ) {
+    Thread.sleep ( nextCustomerWaitTime ( ) )
+    println ( 'World : Customer enters shop.' )
+    final customer = new Customer ( i )
+    if ( waitingChairs.offer ( customer ) ) {
+      println ( 'Shop : Customer ' + customer.id + ' takes a seat. ' + waitingChairs.size ( ) + ' in use.' )
+    }
+    else {
+      ++customersTurnedAway
+      println ( 'Shop : Customer ' + customer.id + ' turned away.' )
+    }
+  }
+  barber.stopWork ( )
+  barberThread.join ( )
+  println ( '\nTrimmed ' + customersTrimmed + ' and turned away ' + customersTurnedAway + ' today.' )
+}
+
+runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
