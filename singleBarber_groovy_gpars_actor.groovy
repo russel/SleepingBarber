@@ -17,12 +17,12 @@ import groovyx.gpars.group.DefaultPGroup
 
 class Customer {
   final Integer id
-  public Customer ( final int i ) { id = i }
+  public Customer ( final Integer id ) { this.id = id }
 }
 
 class SuccessfulCustomer {
   final Customer customer
-  public SuccessfulCustomer ( final Customer c ) { customer = c }
+  public SuccessfulCustomer ( final Customer customer ) { this.customer = customer }
 }
 
 def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure hairTrimTime , Closure nextCustomerWaitTime ) {

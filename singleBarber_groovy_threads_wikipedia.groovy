@@ -21,7 +21,7 @@ def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure h
   final barber = new Runnable ( ) {
     private working = true
     public void stopWork ( ) { working = false }
-    public void run ( ) {
+    @Override public void run ( ) {
       while ( working ) {
         customerSemaphore.acquire ( )
         accessSeatsSemaphore.acquire ( )
