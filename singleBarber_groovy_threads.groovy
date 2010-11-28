@@ -23,6 +23,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     @Override public void run ( ) {
       while ( working || ( waitingChairs.size ( ) > 0 ) ) {
         def customer = waitingChairs.take ( )
+        assert customer instanceof Customer
         println ( 'Barber : Starting Customer ' + customer.id )
         Thread.sleep ( hairTrimTime ( ) )
         println ( 'Barber : Finished Customer ' + customer.id )
