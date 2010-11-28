@@ -64,7 +64,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
            }
            break
          case '' : isOpen = false ; break
-         default : throw new RuntimeException ( 'shop got a message of unexpected type ' + message.class )
+         default : throw new RuntimeException ( 'Shop got a message of unexpected type ' + message.class )
         }
       }
     }
