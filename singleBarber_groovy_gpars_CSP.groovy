@@ -11,10 +11,6 @@
 //
 //  This is only one of a potentially infinite number of correct versions.
 
-//  As at 2010-11-07 17:48+00:00 this code sucks.  CSP channels are synchronous so we can't use the object
-//  message structure we would with actors.  Currently there is "global" data and this makes things totally
-//  unsafe and very un-CSP.
-
 @Grab ( group = 'org.codehaus.jcsp' , module = 'jcsp' , version = '1.1-rc5' )
 @Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.11-beta-1' )
 
@@ -30,7 +26,8 @@ class Customer {
   public Customer ( final int i ) { id = i }
 }
 
-def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure hairTrimTime , Closure nextCustomerWaitTime ) {
+def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
+                    final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   final worldToShopChannel = Channel.one2one ( )
   final shopToBarberChannel = Channel.one2one ( new Buffer ( numberOfWaitingSeats ) )
   final barberToShopChannel = Channel.one2one ( )
@@ -59,10 +56,10 @@ def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure h
       def customersTurnedAway = 0
       def customersTrimmed = 0
       def isOpen = true
-mainloop: 
+    mainloop: 
       while ( true ) {
         switch ( selector.select ( ) ) { 
-         case 0 : // From the Barber
+         case 0 : //////// From the Barber ////////
            def customer = fromBarberChannel.read ( )
            assert customer instanceof Customer
            --seatsTaken
@@ -74,7 +71,7 @@ mainloop:
              break mainloop
            }
            break
-         case 1 : // From the World
+         case 1 : //////// From the World ////////
            def customer = fromWorldChannel.read ( )
            if ( customer == '' ) { isOpen = false }
            else {

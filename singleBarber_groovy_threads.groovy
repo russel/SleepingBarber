@@ -12,7 +12,8 @@ class Customer {
   public Customer ( final Integer id ) { this.id = id }
 }
 
-def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure hairTrimTime , Closure nextCustomerWaitTime ) {
+def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
+                    final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   final waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats )
   final customersTurnedAway = 0
   final customersTrimmed = 0

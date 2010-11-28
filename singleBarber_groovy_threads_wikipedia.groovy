@@ -11,7 +11,8 @@
 
 import java.util.concurrent.Semaphore
 
-def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure hairTrimTime , Closure nextCustomerWaitTime ) {
+def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
+                    final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   final customerSemaphore = new Semaphore ( 1 )
   final barberSemaphore = new Semaphore ( 1 )
   final accessSeatsSemaphore = new Semaphore ( 1 )
@@ -43,17 +44,17 @@ def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure h
                                            public void run ( ) {
                                              accessSeatsSemaphore.acquire ( )
                                              if ( numberOfFreeSeats > 0 ) {
-                                               println ( 'Shop : Customer takes a seat. ' + ( numberOfWaitingSeats - numberOfFreeSeats ) + ' in use.' )
+                                               println ( 'Shop : Customer ' + i + ' takes a seat. ' + ( numberOfWaitingSeats - numberOfFreeSeats ) + ' in use.' )
                                                --numberOfFreeSeats
                                                customerSemaphore.release ( )
                                                accessSeatsSemaphore.release ( )
                                                barberSemaphore.acquire ( )
-                                               println ( 'Shop : Customer leaving trimmed.' )
+                                               println ( 'Shop : Customer ' + i + ' leaving trimmed.' )
                                                ++customersTrimmed
                                              }
                                              else {
                                                accessSeatsSemaphore.release ( )
-                                               println ( 'Shop : Customer turned away.' )
+                                               println ( 'Shop : Customer ' + i + ' turned away.' )
                                                ++customersTurnedAway
                                              }
                                            }

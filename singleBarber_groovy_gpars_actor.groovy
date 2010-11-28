@@ -25,7 +25,8 @@ class SuccessfulCustomer {
   public SuccessfulCustomer ( final Customer customer ) { this.customer = customer }
 }
 
-def runSimulation ( int numberOfCustomers , int numberOfWaitingSeats , Closure hairTrimTime , Closure nextCustomerWaitTime ) {
+def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
+                    final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   def group = new DefaultPGroup ( )
   def barber = group.reactor { customer ->
     assert customer instanceof Customer
