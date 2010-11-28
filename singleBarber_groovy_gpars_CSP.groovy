@@ -88,7 +88,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
            }
            break
          default :
-           throw new RuntimeException ( 'Shop : Seleced an non-existant channel.' )
+           throw new RuntimeException ( 'Shop : Selected a non-existent channel.' )
         }
       }
     }
