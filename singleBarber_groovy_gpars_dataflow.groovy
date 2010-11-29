@@ -7,9 +7,8 @@
 
 @Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.11-beta-1' )
 
+import groovyx.gpars.dataflow.DataFlow
 import groovyx.gpars.dataflow.DataFlowQueue
-import static groovyx.gpars.dataflow.DataFlow.select
-import static groovyx.gpars.dataflow.DataFlow.task
 
 class Customer {
   final Integer id
@@ -21,7 +20,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   def worldToShop = new DataFlowQueue ( )
   def shopToBarber = new DataFlowQueue ( )
   def barberToShop = new DataFlowQueue ( )
-  task { //////// Barber ////////
+  final barber = DataFlow.task {
     while ( true ) {
       def customer = shopToBarber.val
       if ( customer == '' ) { break }
@@ -32,14 +31,14 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
       barberToShop << customer
     }
   }
-  task { //////// Shop ////////
+  final shop = DataFlow.task {
     def seatsTaken = 0
     def customersTurnedAway = 0
     def customersTrimmed = 0
     def isOpen = true
    mainloop:
     while ( true ) {
-      def selector = select ( barberToShop , worldToShop )
+      def selector = DataFlow.select ( barberToShop , worldToShop )
       def item = selector.select ( )
       switch ( item.index ) {
        case 0 : //////// From the Barber ////////
@@ -79,6 +78,10 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     worldToShop << new Customer ( number )
   }
   worldToShop << ''
+  //  We have to wait for the threads handling the dataflow system to terminate so that we can close it all
+  //  down and hence allow the script to terminate.
+  [ barber , shop ]*.join ( )
+  DataFlow.DATA_FLOW_GROUP.shutdown ( )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
