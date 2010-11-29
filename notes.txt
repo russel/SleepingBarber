@@ -1,12 +1,11 @@
 PyCSP single barber never turns a customer away => synchronization issue!
 Python-CSP version currently blocks.
 
-PyCSP and Python-CSP have 4 encoded instead of numberOfWatingSeats parameter.
+PyCSP and Python-CSP have 4 encoded instead of numberOfWaitingSeats parameter.
 
 Why does the D version never reject anyone?
 
 
-Groovy CSP doesn't terminate properly.  It also never turns away a client.
 
 Is never turning a customer way implying that the acceptance of a customer is being controlled at the shop
 door?
