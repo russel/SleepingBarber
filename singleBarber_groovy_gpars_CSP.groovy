@@ -46,7 +46,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
       }
     }
   }
-  final barbersShop = new CSProcess ( ) {
+  final shop = new CSProcess ( ) {
     @Override public void run ( ) {
       final fromBarberChannel = barberToShopChannel.in ( )
       final fromWorldChannel = worldToShopChannel.in ( )
@@ -104,7 +104,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
       toShopChannel.write ( '' )
     }
   }
-  new PAR ( [ barber , barbersShop , world ] ).run ( )
+  new PAR ( [ barber , shop , world ] ).run ( )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
