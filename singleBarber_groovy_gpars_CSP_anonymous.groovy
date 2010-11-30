@@ -33,16 +33,16 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   final barberToShopChannel = Channel.one2one ( )
   final barber = new CSProcess ( ) {
     @Override public void run ( ) {
-      final inChannel = shopToBarberChannel.in ( )
-      final outChannel = barberToShopChannel.out ( )
+      final fromShopChannel = shopToBarberChannel.in ( )
+      final toShopChannel = barberToShopChannel.out ( )
       while ( true ) {
-        final customer = inChannel.read ( )
+        final customer = fromShopChannel.read ( )
         if ( customer == '' ) { break }
         assert customer instanceof Customer
         println ( 'Barber : Starting Customer ' + customer.id )
         Thread.sleep ( hairTrimTime ( ) )
         println ( 'Barber : Finished Customer ' + customer.id )
-        outChannel.write ( customer )
+        toShopChannel.write ( customer )
       }
     }
   }
@@ -50,7 +50,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     @Override public void run ( ) {
       final fromBarberChannel = barberToShopChannel.in ( )
       final fromWorldChannel = worldToShopChannel.in ( )
-      final outChannel = shopToBarberChannel.out ( )
+      final toBarberChannel = shopToBarberChannel.out ( )
       final selector = new ALT ( [ fromBarberChannel , fromWorldChannel ] )
       def seatsTaken = 0
       def customersTurnedAway = 0
@@ -67,7 +67,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
            println ( 'Shop : Customer ' + customer.id + ' leaving trimmed.' )
            if ( ! isOpen && ( seatsTaken == 0 ) ) {
              println ( '\nTrimmed ' + customersTrimmed + ' and turned away ' + customersTurnedAway + ' today.' )
-             outChannel.write ( '' )
+             toBarberChannel.write ( '' )
              break mainloop
            }
            break
@@ -79,7 +79,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
              if ( seatsTaken < numberOfWaitingSeats ) {
                ++seatsTaken
                println ( 'Shop : Customer ' + customer.id + ' takes a seat. ' + seatsTaken + ' in use.' )
-               outChannel.write ( customer )
+               toBarberChannel.write ( customer )
              }
              else {
                println ( 'Shop : Customer ' + customer.id + ' turned away.' )
