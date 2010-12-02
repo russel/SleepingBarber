@@ -7,7 +7,7 @@
 //
 //  This solution follow the psuedocode of the solution set out on the Wikipedia page.  Use
 //  java.util.concurrent.Semaphore as an implementation of semaphore to save having to write one or use the
-//  Java basic wait/notify system..
+//  Java basic wait/notify system.
 
 import java.util.concurrent.Semaphore
 
@@ -38,23 +38,23 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   final barberThread = new Thread ( barber )
   barberThread.start ( )
   final customerThreads = [ ]
-  for ( int i = 0 ; i < numberOfCustomers ; ++i ) {
-    println ( 'World : Customer enters shop.' )
+  for ( number in 0 ..< numberOfCustomers ) {
+    println ( "World : Customer ${number} enters the shop." )
     final customerThread = new Thread ( new Runnable ( ) {
                                            public void run ( ) {
                                              accessSeatsSemaphore.acquire ( )
                                              if ( numberOfFreeSeats > 0 ) {
-                                               println ( 'Shop : Customer ' + i + ' takes a seat. ' + ( numberOfWaitingSeats - numberOfFreeSeats ) + ' in use.' )
+                                               println ( "Shop : Customer ${number} takes a seat. ${numberOfWaitingSeats - numberOfFreeSeats} in use." )
                                                --numberOfFreeSeats
                                                customerSemaphore.release ( )
                                                accessSeatsSemaphore.release ( )
                                                barberSemaphore.acquire ( )
-                                               println ( 'Shop : Customer ' + i + ' leaving trimmed.' )
+                                               println ( "Shop : Customer ${number} leaving trimmed." )
                                                ++customersTrimmed
                                              }
                                              else {
                                                accessSeatsSemaphore.release ( )
-                                               println ( 'Shop : Customer ' + i + ' turned away.' )
+                                               println ( "Shop : Customer ${number} turned away." )
                                                ++customersTurnedAway
                                              }
                                            }
@@ -66,7 +66,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   customerThreads*.join ( )
   barber.stopWork ( )
   barberThread.join ( )
-  println ( '\nTrimmed ' + customersTrimmed + ' and turned away ' + customersTurnedAway + ' today.' )
+  println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )

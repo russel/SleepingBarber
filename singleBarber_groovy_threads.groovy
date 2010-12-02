@@ -21,31 +21,31 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
       while ( working || ( waitingChairs.size ( ) > 0 ) ) {
         def customer = waitingChairs.take ( )
         assert customer instanceof Customer
-        println ( 'Barber : Starting Customer ' + customer.id )
+        println ( "Barber : Starting Customer ${customer.id}." )
         Thread.sleep ( hairTrimTime ( ) )
-        println ( 'Barber : Finished Customer ' + customer.id )
+        println ( "Barber : Finished Customer ${customer.id}." )
         ++customersTrimmed
-        println ( 'Shop : Customer ' + customer.id + ' leaving trimmed.' )
+        println ( "Shop : Customer ${customer.id} leaving trimmed." )
       }
     }
   }
   final barberThread = new Thread ( barber )
   barberThread.start ( )
-  for ( int i = 0 ; i < numberOfCustomers ; ++i ) {
+  for ( number in 0 ..< numberOfCustomers ) {
     Thread.sleep ( nextCustomerWaitTime ( ) )
-    println ( 'World : Customer enters shop.' )
-    final customer = new Customer ( i )
+    println ( "World : Customer ${number} enters the shop." )
+    final customer = new Customer ( number )
     if ( waitingChairs.offer ( customer ) ) {
-      println ( 'Shop : Customer ' + customer.id + ' takes a seat. ' + waitingChairs.size ( ) + ' in use.' )
+      println ( "Shop : Customer ${customer.id} takes a seat. ${waitingChairs.size ( )} in use." )
     }
     else {
       ++customersTurnedAway
-      println ( 'Shop : Customer ' + customer.id + ' turned away.' )
+      println ( "Shop : Customer ${customer.id} turned away." )
     }
   }
   barber.stopWork ( )
   barberThread.join ( )
-  println ( '\nTrimmed ' + customersTrimmed + ' and turned away ' + customersTurnedAway + ' today.' )
+  println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )

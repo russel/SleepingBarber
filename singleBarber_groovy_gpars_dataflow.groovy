@@ -22,9 +22,9 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
       def customer = shopToBarber.val
       if ( customer == '' ) { break }
       assert customer instanceof Customer
-      println ( 'Barber : Starting Customer ' + customer.id )
+      println ( "Barber : Starting Customer ${customer.id}." )
       Thread.sleep ( hairTrimTime ( ) )
-      println ( 'Barber : Finished Customer ' + customer.id )
+      println ( "Barber : Finished Customer ${customer.id}." )
       barberToShop << customer
     }
   }
@@ -42,9 +42,9 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
          assert item.value instanceof Customer
          --seatsTaken
          ++customersTrimmed
-         println ( 'Shop : Customer ' + item.value.id + ' leaving trimmed.' )
+         println ( "Shop : Customer ${item.value.id} leaving trimmed." )
          if ( ! isOpen && ( seatsTaken == 0 ) ) {
-           println ( '\nTrimmed ' + customersTrimmed + ' and turned away ' + customersTurnedAway + ' today.' )
+           println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
            shopToBarber << ''
            break mainloop
          }
@@ -55,11 +55,11 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
            assert item.value instanceof Customer
            if ( seatsTaken < numberOfWaitingSeats ) {
              ++seatsTaken
-             println ( 'Shop : Customer ' + item.value.id + ' takes a seat. ' + seatsTaken + ' in use.' )
+             println ( "Shop : Customer ${item.value.id} takes a seat. ${seatsTaken} in use." )
              shopToBarber << item.value
            }
            else {
-             println ( 'Shop : Customer ' + item.value.id + ' turned away.' )
+             println ( "Shop : Customer ${item.value.id} turned away." )
              ++customersTurnedAway
            }
          }
@@ -71,7 +71,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   }
   for ( number in 0 ..< numberOfCustomers ) {
     Thread.sleep ( nextCustomerWaitTime ( ) )
-    println ( 'World : Customer ' + number + ' enters the shop.' )
+    println ( "World : Customer ${number} enters the shop." )
     worldToShop << new Customer ( number )
   }
   worldToShop << ''

@@ -37,9 +37,9 @@ class Barber implements CSProcess {
         final customer = fromShopChannel.read ( )
         if ( customer == '' ) { break }
         assert customer instanceof Customer
-        println ( 'Barber : Starting Customer ' + customer.id )
+        println ( "Barber : Starting Customer ${customer.id}." )
         Thread.sleep ( hairTrimTime ( ) )
-        println ( 'Barber : Finished Customer ' + customer.id )
+        println ( "Barber : Finished Customer ${customer.id}." )
         toShopChannel.write ( customer )
       }
     }
@@ -70,9 +70,9 @@ class Shop implements CSProcess {
          assert customer instanceof Customer
          --seatsTaken
          ++customersTrimmed
-         println ( 'Shop : Customer ' + customer.id + ' leaving trimmed.' )
+         println ( "Shop : Customer ${customer.id} leaving trimmed." )
          if ( ! isOpen && ( seatsTaken == 0 ) ) {
-           println ( '\nTrimmed ' + customersTrimmed + ' and turned away ' + customersTurnedAway + ' today.' )
+           println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
            toBarberChannel.write ( '' )
            break mainloop
          }
@@ -84,11 +84,11 @@ class Shop implements CSProcess {
            assert customer instanceof Customer
            if ( seatsTaken < numberOfWaitingSeats ) {
              ++seatsTaken
-             println ( 'Shop : Customer ' + customer.id + ' takes a seat. ' + seatsTaken + ' in use.' )
+             println ( "Shop : Customer ${customer.id} takes a seat. ${seatsTaken} in use." )
              toBarberChannel.write ( customer )
            }
            else {
-             println ( 'Shop : Customer ' + customer.id + ' turned away.' )
+             println ( "Shop : Customer ${customer.id} turned away." )
              ++customersTurnedAway
            }
          }
@@ -112,7 +112,7 @@ class World implements CSProcess {
   @Override public void run ( ) {
     for ( number in 0 ..< numberOfCustomers ) {
       Thread.sleep ( nextCustomerWaitTime ( ) )
-      println ( 'World : Customer ' + number + ' enters the shop.' )
+      println ( "World : Customer ${number} enters the shop." )
       toShopChannel.write ( new Customer ( number ) )
     }
     toShopChannel.write ( '' )
