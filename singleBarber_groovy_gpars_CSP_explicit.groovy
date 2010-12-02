@@ -11,8 +11,8 @@
 //
 //  This is only one of a potentially infinite number of correct versions.
 
-@Grab ( group = 'org.codehaus.jcsp' , module = 'jcsp' , version = '1.1-rc5' )
-@Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.11-beta-1' )
+@Grab ( 'org.codehaus.jcsp:jcsp:1.1-rc5' )
+@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-1' )
 
 import org.jcsp.util.Buffer
 import org.jcsp.lang.Channel

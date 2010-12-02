@@ -11,7 +11,7 @@
 //
 //  This is only one of a potentially infinite number of correct versions.
 
-@Grab ( group = 'org.codehaus.gpars' , module = 'gpars' , version = '0.11-beta-1' )
+@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-1' )
 
 import groovyx.gpars.group.DefaultPGroup
 
