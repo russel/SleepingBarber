@@ -15,11 +15,8 @@
 
 import groovyx.gpars.group.DefaultPGroup
 
-class Customer {
-  final Integer id
-  public Customer ( final Integer id ) { this.id = id }
-}
-
+@Immutable class Customer { Integer id }
+//@Immutable class SuccessfulCustomer {Customer customer }
 class SuccessfulCustomer {
   final Customer customer
   public SuccessfulCustomer ( final Customer customer ) { this.customer = customer }

@@ -10,10 +10,7 @@
 import groovyx.gpars.dataflow.DataFlow
 import groovyx.gpars.dataflow.DataFlowQueue
 
-class Customer {
-  final Integer id
-  public Customer ( final Integer id ) { this.id = id }
-}
+@Immutable class Customer { Integer id }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {

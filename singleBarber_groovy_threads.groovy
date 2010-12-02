@@ -7,10 +7,7 @@
 
 import java.util.concurrent.ArrayBlockingQueue
 
-class Customer {
-  final Integer id
-  public Customer ( final Integer id ) { this.id = id }
-}
+@Immutable class Customer { Integer id }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {

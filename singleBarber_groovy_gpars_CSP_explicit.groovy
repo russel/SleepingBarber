@@ -21,10 +21,7 @@ import org.jcsp.lang.CSProcess
 import groovyx.gpars.csp.PAR
 import groovyx.gpars.csp.ALT
 
-class Customer {
-  final Integer id
-  public Customer ( final int i ) { id = i }
-}
+@Immutable class Customer { Integer id }
 
 class Barber implements CSProcess {
   final fromShopChannel
