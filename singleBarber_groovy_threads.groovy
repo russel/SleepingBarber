@@ -7,6 +7,8 @@
 
 import java.util.concurrent.ArrayBlockingQueue
 
+import groovy.transform.Immutable
+
 @Immutable class Customer { Integer id }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
