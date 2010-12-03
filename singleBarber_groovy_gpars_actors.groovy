@@ -13,14 +13,12 @@
 
 @Grab ( 'org.codehaus.gpars:gpars:0.11-beta-1' )
 
+import groovy.transform.Immutable
+
 import groovyx.gpars.group.DefaultPGroup
 
 @Immutable class Customer { Integer id }
-//@Immutable class SuccessfulCustomer { Customer customer }
-class SuccessfulCustomer {
-  final Customer customer
-  public SuccessfulCustomer ( final Customer customer ) { this.customer = customer }
-}
+@Immutable class SuccessfulCustomer { Customer customer }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {

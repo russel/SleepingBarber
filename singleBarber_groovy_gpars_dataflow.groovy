@@ -7,6 +7,8 @@
 
 @Grab ( 'org.codehaus.gpars:gpars:0.11-beta-1' )
 
+import groovy.transform.Immutable
+
 import groovyx.gpars.dataflow.DataFlow
 import groovyx.gpars.dataflow.DataFlowQueue
 

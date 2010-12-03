@@ -14,6 +14,8 @@
 @Grab ( 'org.codehaus.jcsp:jcsp:1.1-rc5' )
 @Grab ( 'org.codehaus.gpars:gpars:0.11-beta-1' )
 
+import groovy.transform.Immutable
+
 import org.jcsp.util.Buffer
 import org.jcsp.lang.Channel
 import org.jcsp.lang.CSProcess
