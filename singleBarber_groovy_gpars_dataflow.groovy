@@ -5,7 +5,7 @@
 //
 //  Copyright © 2010 Russel Winder
 
-@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-1' )
+@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-2' )
 
 import groovy.transform.Immutable
 
@@ -77,10 +77,8 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     worldToShop << new Customer ( number )
   }
   worldToShop << ''
-  //  We have to wait for the threads handling the dataflow system to terminate so that we can close it all
-  //  down and hence allow the script to terminate.
+  //  Make sure all computation is over before terminating.
   [ barber , shop ]*.join ( )
-  DataFlow.DATA_FLOW_GROUP.shutdown ( )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
