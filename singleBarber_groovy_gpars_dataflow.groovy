@@ -5,7 +5,7 @@
 //
 //  Copyright © 2010 Russel Winder
 
-@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-2' )
+@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-3' )
 
 import groovy.transform.Immutable
 
