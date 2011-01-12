@@ -4,7 +4,7 @@
 //  Groovy CSP (a part of GPars, http://gpars.codehaus.org),
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010 Russel Winder
+//  Copyright © 2010-1 Russel Winder
 //
 //  Everything here is modelled using a process.  The waiting queue is modelled by having an n-place buffer
 //  in the channel between the shop and the barber.
@@ -12,7 +12,7 @@
 //  This is only one of a potentially infinite number of correct versions.
 
 @Grab ( 'org.codehaus.jcsp:jcsp:1.1-rc5' )
-@Grab ( 'org.codehaus.gpars:gpars:0.11-beta-3' )
+@Grab ( 'org.codehaus.gpars:gpars:0.11' )
 
 import groovy.transform.Immutable
 
