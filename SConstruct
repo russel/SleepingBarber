@@ -1,7 +1,7 @@
 import os
 
 goEnvironment = Environment ( tools = [ 'go' ] )
-
+goEnvironment.GoTarget ( os.environ['GOOS'] , os.environ['GOARCH'] ) 
 for item in Glob ( '*.go' ) :
     goEnvironment.GoProgram ( os.path.splitext ( item.name ) [0] ,  item )
 
@@ -10,11 +10,10 @@ for item in Glob ( '*.go' ) :
 #  tools. Also the dmd compiler is not in the bootstrap path.
 
 dEnvironment = Environment (
-    tools = [ 'gcc' , 'gnulink' , 'dmd' ] ,# NB dmd must follow gcc and gnulink.
+    tools = [ 'gcc' , 'gnulink' , 'dmd_new' ] ,# NB dmd must follow gcc and gnulink.
     ENV = os.environ ,# dmd is not in the standard place.
     DFLAGS = [ '-O' , '-release' , '-inline' ] ,
    )
-
 for item in Glob ( '*.d' ) :
     dEnvironment.Program ( item )
 
