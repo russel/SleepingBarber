@@ -1,11 +1,11 @@
 //  This is a model of the "The Sleeping Barber" problem using D (http://d-programming-language.org/),
  //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010 Russel Winder
+//  Copyright © 2010--2011 Russel Winder
 
-//  D appears to implement Actor Model when creating spawned processes, i.e. each process has a single
-//  message queue on which receive or receiveOnly can be called. Customers are passed as message between the
-//  processes.  However as each process has only a single message queu we have to realize case classes.
+//  D implements Actor Model when creating spawned processes, i.e. each process has a single message queue
+//  on which receive or receiveOnly can be called. Customers are passed as message between the processes.
+//  However as each process has only a single message queue we have to realize case classes.
 
 import std.concurrency ;
 import std.random ;
@@ -44,28 +44,28 @@ void shop ( int numberOfSeats , Tid world , Tid barber ) {
   auto isOpen = true ;
   auto seatsFilled = 0 ;
   auto customersTurnedAway = 0 ;
-  auto customersTrimmeds = 0 ;
+  auto customersTrimmed = 0 ;
   auto running = true ;
   barber.send ( thisTid ) ;
   while ( running ) {
     receive (
              ( Customer customer ) {
                if ( seatsFilled < numberOfSeats ) {
-                 seatsFilled++ ;
+                 ++seatsFilled ;
                  writeln ( "Shop : Customer " , customer.id , " takes a seat. " , seatsFilled , " in use." ) ;
                  barber.send ( customer ) ;
                }
                else {
-                 customersTurnedAway++ ;
+                 ++customersTurnedAway ;
                  writeln ( "Shop : Customer " , customer.id , " turned away." ) ;
                }
              } ,
              ( SuccessfulCustomer customer ) {
-               customersTrimmeds++ ;
-               seatsFilled-- ;
+               ++customersTrimmed ;
+               --seatsFilled ;
                writeln ( "Shop : Customer " , customer.customer.id , " leaving trimmed." ) ;
                if ( ! isOpen && ( seatsFilled == 0 ) ) {
-                 writeln ( "\nTrimmed " , customersTrimmeds , " and turned away " , customersTurnedAway , " today.\n" ) ;
+                 writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today.\n" ) ;
                  world.send ( "" ) ;
                }
              } ,
