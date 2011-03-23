@@ -16,12 +16,10 @@ import core.thread ;
 /*immutable*/ struct Customer { int id ; }
 /*immutable*/ struct SuccessfulCustomer { Customer customer ; }
 
-void barber ( immutable ( int ) function ( ) hairTrimTime ) {
-  Tid shop ;
+void barber ( immutable ( int ) function ( ) hairTrimTime , Tid shop ) {
   auto running = true ;
   while ( running ) {
     receive (
-             ( Tid tid ) { shop = tid ; } ,
              ( Customer customer ) {
                writeln ( "Barber : Starting Customer " , customer.id ) ;
                Thread.sleep ( hairTrimTime ( ) ) ;
@@ -33,10 +31,10 @@ void barber ( immutable ( int ) function ( ) hairTrimTime ) {
   }
 }
 
-void shop ( immutable ( int ) numberOfSeats , Tid world , Tid barber ) {
+void shop ( immutable ( int ) numberOfSeats , immutable ( int ) function ( ) hairTrimTime , Tid world  ) {
   auto seatsFilled = 0 ;
   auto running = true ;
-  barber.send ( thisTid ) ;
+  auto barber = spawn ( & barber , hairTrimTime , thisTid ) ;
   while ( running ) {
     receive (
              ( Customer customer ) {
@@ -62,8 +60,7 @@ void shop ( immutable ( int ) numberOfSeats , Tid world , Tid barber ) {
 
 void world ( immutable ( int ) numberOfCustomers , immutable ( int ) numberOfSeats ,
              immutable ( int ) function ( )  nextCustomerWaitTime , immutable ( int ) function ( ) hairTrimTime ) {
-  auto barber = spawn ( & barber , hairTrimTime ) ;
-  auto shop = spawn ( & shop , numberOfSeats , thisTid , barber ) ;
+  auto shop = spawn ( & shop , numberOfSeats , hairTrimTime , thisTid ) ;
   for ( auto i = 0 ; i < numberOfCustomers ; ++i ) {
     Thread.sleep ( nextCustomerWaitTime ( ) ) ;
     writeln ( "World : Customer " , i , " enters the shop." ) ;
