@@ -13,17 +13,10 @@ import std.stdio ;
 
 import core.thread ;
 
-struct Customer {
-  int id ;
-  this ( int id ) { this.id = id ; }
-}
+/*immutable*/ struct Customer { int id ; }
+/*immutable*/ struct SuccessfulCustomer { Customer customer ; }
 
-struct SuccessfulCustomer {
-  Customer customer ;
-  this ( Customer customer ) { this.customer = customer ; }
-}
-
-void barber ( long function ( ) hairTrimTime ) {
+void barber ( immutable ( int ) function ( ) hairTrimTime ) {
   Tid shop ;
   auto running = true ;
   while ( running ) {
@@ -40,7 +33,7 @@ void barber ( long function ( ) hairTrimTime ) {
   }
 }
 
-void shop ( int numberOfSeats , Tid world , Tid barber ) {
+void shop ( immutable ( int ) numberOfSeats , Tid world , Tid barber ) {
   auto isOpen = true ;
   auto seatsFilled = 0 ;
   auto customersTurnedAway = 0 ;
@@ -75,7 +68,8 @@ void shop ( int numberOfSeats , Tid world , Tid barber ) {
   }
 }
 
-void world ( int numberOfCustomers , int numberOfSeats , long function ( )  nextCustomerWaitTime , long function ( ) hairTrimTime ) {
+void world ( immutable ( int ) numberOfCustomers , immutable ( int ) numberOfSeats ,
+             immutable ( int ) function ( )  nextCustomerWaitTime , immutable ( int ) function ( ) hairTrimTime ) {
   auto barber = spawn ( & barber , hairTrimTime ) ;
   auto shop = spawn ( & shop , numberOfSeats , thisTid , barber ) ;
   for ( auto i = 0 ; i < numberOfCustomers ; ++i ) {
@@ -87,9 +81,9 @@ void world ( int numberOfCustomers , int numberOfSeats , long function ( )  next
   receiveOnly ! ( string ) ( ) ;
 }
 
-void main ( string[] args ) {
+void main ( immutable string[] args ) {
   world ( 20 , 4 ,
-          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 20000 ) + 10000 ; } ,
-          function long ( ) { return ( cast ( long ) uniform ( 0.0 , 1.0 ) * 60000 ) + 10000 ; }
+          function immutable ( int ) ( ) { return uniform ( 0 , 20000 ) + 10000 ; } ,
+          function immutable ( int ) ( ) { return uniform ( 0 , 60000 ) + 10000 ; }
           ) ;
 }
