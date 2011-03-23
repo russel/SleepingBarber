@@ -70,12 +70,9 @@ void world ( immutable ( int ) numberOfCustomers , immutable ( int ) numberOfSea
   auto customersTrimmed = 0 ;
   while ( customersTrimmed + customersTurnedAway < numberOfCustomers ) {
     receive (
-             ( Customer customer ) {
-               ++customersTurnedAway ;
-             } ,
-             ( SuccessfulCustomer customer ) {
-               ++customersTrimmed ;
-             } ,
+             ( Customer customer ) { ++customersTurnedAway ; } ,
+             ( SuccessfulCustomer customer ) { ++customersTrimmed ; } ,
+             ( OwnerTerminated ) { writeln ( "Call the police, the barber is Sweeney Todd." ) ; }
              ) ;
   }
   writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today.\n" ) ;
