@@ -11,7 +11,7 @@
 //
 //  This is only one of a potentially infinite number of correct versions.
 
-@Grab ( 'org.codehaus.gpars:gpars:0.11' )
+@Grab ( 'org.codehaus.gpars:gpars:0.12-beta-1-SNAPSHOT' )
 
 import groovy.transform.Immutable
 
