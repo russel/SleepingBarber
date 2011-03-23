@@ -34,10 +34,7 @@ void barber ( immutable ( int ) function ( ) hairTrimTime ) {
 }
 
 void shop ( immutable ( int ) numberOfSeats , Tid world , Tid barber ) {
-  auto isOpen = true ;
   auto seatsFilled = 0 ;
-  auto customersTurnedAway = 0 ;
-  auto customersTrimmed = 0 ;
   auto running = true ;
   barber.send ( thisTid ) ;
   while ( running ) {
@@ -49,20 +46,15 @@ void shop ( immutable ( int ) numberOfSeats , Tid world , Tid barber ) {
                  barber.send ( customer ) ;
                }
                else {
-                 ++customersTurnedAway ;
                  writeln ( "Shop : Customer " , customer.id , " turned away." ) ;
+                 world.send ( customer ) ;
                }
              } ,
              ( SuccessfulCustomer customer ) {
-               ++customersTrimmed ;
                --seatsFilled ;
                writeln ( "Shop : Customer " , customer.customer.id , " leaving trimmed." ) ;
-               if ( ! isOpen && ( seatsFilled == 0 ) ) {
-                 writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today.\n" ) ;
-                 world.send ( "" ) ;
-               }
+               world.send ( customer ) ;
              } ,
-             ( string s ) { isOpen = false ; } ,
              ( OwnerTerminated ) { running = false ; }
              ) ;
   }
@@ -77,8 +69,19 @@ void world ( immutable ( int ) numberOfCustomers , immutable ( int ) numberOfSea
     writeln ( "World : Customer " , i , " enters the shop." ) ;
     shop.send ( Customer ( i ) ) ;
   }
-  shop.send ( "" ) ;
-  receiveOnly ! ( string ) ( ) ;
+  auto customersTurnedAway = 0 ;
+  auto customersTrimmed = 0 ;
+  while ( customersTrimmed + customersTurnedAway < numberOfCustomers ) {
+    receive (
+             ( Customer customer ) {
+               ++customersTurnedAway ;
+             } ,
+             ( SuccessfulCustomer customer ) {
+               ++customersTrimmed ;
+             } ,
+             ) ;
+  }
+  writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today.\n" ) ;
 }
 
 void main ( immutable string[] args ) {
