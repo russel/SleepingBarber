@@ -40,6 +40,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
        case 0 : //////// From the Barber ////////
          assert item.value instanceof Customer
          --seatsTaken
+         println ( "Shop : Customer ${item.value.id} leaves trimmed." )
          shopToWorld << new SuccessfulCustomer ( item.value )
          break
        case 1 : //////// From the World ////////
