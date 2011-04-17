@@ -45,7 +45,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
          break
        case 1 : //////// From the World ////////
          assert item.value instanceof Customer
-         if ( seatsTaken < numberOfWaitingSeats ) {
+         if ( seatsTaken <= numberOfWaitingSeats ) {
            ++seatsTaken
            println ( "Shop : Customer ${item.value.id} takes a seat. ${seatsTaken} in use." )
            shopToBarber << item.value
@@ -72,10 +72,14 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   def customersTrimmed = 0
   while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
     def customer = shopToWorld.val
-    if ( customer instanceof SuccessfulCustomer ) { ++customersTrimmed }
+    if ( customer instanceof SuccessfulCustomer ) {
+      ++customersTrimmed
+      println ( "World : Customer ${customer.customer.id} exits shop trimmed." )
+    }
     else {
       assert customer instanceof Customer
       ++customersTurnedAway
+      println ( "World : Customer ${customer.id} exits shop without being trimmed." )
     }
   }
   println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
