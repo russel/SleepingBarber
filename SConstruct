@@ -17,4 +17,16 @@ dEnvironment = Environment (
 for item in Glob ( '*.d' ) :
     dEnvironment.Program ( item )
 
+justThreadPro_home = os.environ['HOME'] + '/lib.Linux.x86_64/JustThreadPro'
+cppEnvironment = Environment (
+    tools = [ 'g++' , 'gnulink' ] ,
+    CPPPATH = [ justThreadPro_home + '/include' ] ,
+    CXXFLAGS = [ '-std=c++0x' ] ,
+    LINKFLAGS = [ '-static' ] ,
+    LIBPATH = [ justThreadPro_home + '/libs' ] ,
+    LIBS = [ 'justthread' , 'pthread' , 'rt' ] ,
+    )
+for item in Glob ( '*.cpp' ) :
+    cppEnvironment.Program ( item )
+
 Clean ( '.' , [ 'scons-go-helper' ] )
