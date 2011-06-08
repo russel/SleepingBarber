@@ -78,7 +78,7 @@ func world ( numberOfCustomers , numberOfSeats int , nextCustomerWaitTime , hair
 
 func main ( ) {
 	world ( 20 , 4 ,
-		func ( ) int64 { return int64 ( rand.Float ( )  * 200000 ) + 100000 } ,
-		func ( ) int64 { return int64 ( rand.Float ( )  * 600000 ) + 100000 } ,
+		func ( ) int64 { return int64 ( rand.Float64 ( )  * 200000 ) + 100000 } ,
+		func ( ) int64 { return int64 ( rand.Float64 ( )  * 600000 ) + 100000 } ,
 	)
 }
