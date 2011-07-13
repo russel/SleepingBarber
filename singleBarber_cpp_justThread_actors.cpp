@@ -10,6 +10,17 @@
 
 #include <jss/actor.hpp>
 
+const unsigned numberOfCustomers = 20 ;
+const unsigned numberOfWaitingSeats = 4 ;
+
+std::chrono::milliseconds hairTrimTime ( ) {
+  return  std::chrono::milliseconds ( 200 + rand ( ) % 200 ) ;
+}
+
+std::chrono::milliseconds customerDelayTime ( ) {
+  return  std::chrono::milliseconds ( 50 + rand ( ) % 250 ) ;
+}
+
 struct customer {
     const unsigned id ;
     explicit customer ( unsigned idI ) : id ( idI ) { }
@@ -31,12 +42,16 @@ jss::actor barber (
                         .match<customer> (
                                           [ ] ( customer c ) {
                                             std::cout << "Barber : Starting Customer " << c.id << std::endl ;
-                                            std::this_thread::sleep_for ( std::chrono::milliseconds ( 200 + rand ( ) % 200 ) ) ;
+                                            std::this_thread::sleep_for ( hairTrimTime ( ) ) ;
                                             std::cout << "Barber : Finished Customer " << c.id << std::endl ;
                                             shop.send ( successfulCustomer ( c ) ) ;
                                           } )
                        .match<std::string> (
-                                            [ & ] ( std::string s ) { running = false ; }
+                                            [ & ] ( std::string s ) {
+                                              std::cout << "Barber : Knocking off time." << std::endl ;
+                                              shop.send ( std::string ( "Barber" ) ) ;
+                                              running = false ;
+                                            }
                                             ) ;
                      } } ) ;
 
@@ -48,13 +63,15 @@ jss::actor shop (
                      jss::actor::receive ( )
                       .match<customer> (
                                         [ & ] ( customer c ) {
-                                          if ( seatsFilled >= 4 ) {
+                                          if ( seatsFilled >= numberOfWaitingSeats ) {
                                             std::cout << "Shop : Customer " << c.id << " turned away." << std::endl ;
                                             world.send ( c ) ;
                                           }
-                                          ++seatsFilled ;
-                                          std::cout << "Shop : Customer " << c.id << " takes a seat. " << seatsFilled << " in use." << std::endl ;
-                                          barber.send ( c ) ;
+                                          else {
+                                            ++seatsFilled ;
+                                            std::cout << "Shop : Customer " << c.id << " takes a seat. " << seatsFilled << " in use." << std::endl ;
+                                            barber.send ( c ) ;
+                                          }
                                         } )
                       .match<successfulCustomer> (
                                                   [ & ] ( successfulCustomer s ) {
@@ -64,22 +81,24 @@ jss::actor shop (
                                                   } )
                       .match<std::string> (
                                            [ & ] ( std::string s ) {
-                                             running = false ;
-                                             barber.send ( std::string ( "" ) ) ;
-                                           }
-                                           ) ; 
+                                             if ( s == std::string ( "World" ) ) {
+                                               std::cout << "Shop : Closing, no more new customers." << std::endl ;
+                                               barber.send ( std::string ( "" ) ) ;
+                                             }
+                                             else if ( s == std::string ( "Barber" ) ) { running = false ; }
+                                           } ) ; 
                    }
                  } ) ;
 
 jss::actor world (
                   [ ] ( ) {
-                    unsigned numberOfCustomers = 20 ;
                     for ( unsigned i = 0 ; i < numberOfCustomers ; ++i ) {
-                      std::this_thread::sleep_for ( std::chrono::milliseconds ( 50 + rand ( ) % 250 ) ) ;
+                      std::this_thread::sleep_for ( customerDelayTime ( ) ) ;
                       std::cout << "World : Customer " << i << " enters the shop." << std::endl ;
                       shop.send ( customer ( i ) ) ;
                     }
-                    shop.send ( std::string ( "" ) ) ;
+                    std::cout << "World : Time to close the shop." << std::endl ;
+                    shop.send ( std::string ( "World" ) ) ;
                     unsigned customersTurnedAway = 0 ;
                     unsigned customersTrimmed = 0 ;
                     while ( customersTrimmed + customersTurnedAway < numberOfCustomers ) {
