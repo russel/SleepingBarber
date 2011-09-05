@@ -27,6 +27,13 @@ cppEnvironment = Environment (
     LIBS = [ 'justthread' , 'pthread' , 'rt' ] ,
     )
 for item in Glob ( '*.cpp' ) :
-    cppEnvironment.Program ( item )
+    name , extension = os.path.splitext ( item.name )
+    cppEnvironment.Command ( 'run_' + name , cppEnvironment.Program ( item ) , "./$SOURCE" ) 
 
-Clean ( '.' , [ 'scons-go-helper' ] )
+javaEnvironment = Environment ( tools = [ 'javac' ] ,
+                                JAVACFLAGS = [ '-source' , '6' , '-encoding' , 'utf-8' ] ,
+                                JAVACLASSPATH = [ os.environ['HOME'] + '/lib/Java/jsr166y.jar' , os.environ['HOME'] + '/lib/Java/extra166y.jar' ] ,
+                                )
+for  item in Glob ( '*.java' ) :
+    className , extension = os.path.splitext ( item.name )
+    cppEnvironment.Command ( 'run_' + className , javaEnvironment.Java ( '.' , item ) , 'java -cp .:' + ':'.join ( javaEnvironment['JAVACLASSPATH'] ) + ' ' + className ) 
