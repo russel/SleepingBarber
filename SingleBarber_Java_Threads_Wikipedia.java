@@ -7,6 +7,8 @@
 //  java.util.concurrent.Semaphore as an implementation of semaphore to save having to write one or use the
 //  Java basic wait/notify system.
 
+//  Use the default package.
+
 import java.util.ArrayList ;
 import java.util.concurrent.Semaphore ;
 

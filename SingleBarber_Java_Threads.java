@@ -3,6 +3,8 @@
 //
 //  Copyright © 2011 Russel Winder
 
+//  Use the default package.
+
 import java.util.concurrent.ArrayBlockingQueue ;
 
 public class SingleBarber_Java_Threads {
