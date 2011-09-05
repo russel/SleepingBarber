@@ -1,6 +1,6 @@
 /*
  *  This is a model of the "The Sleeping Barber" problem using C++ and Anthoy Williams' Just::Thread Pro
- *  actor implementation over C++0x threads (http://www.stdthread.co.uk/pro/),
+ *  (http://www.stdthread.co.uk/pro/) actor implementation over C++11 threads,
  *  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
  *
  *  Copyright © 2011 Russel Winder
