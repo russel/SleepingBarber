@@ -3,11 +3,14 @@
 //  This is a model of the "The Sleeping Barber" problem using Groovy (http://groovy.codehaus.org),
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010 Russel Winder
+//  Copyright © 2010–2011 Russel Winder
 //
 //  This solution follow the psuedocode of the solution set out on the Wikipedia page.  Use
 //  java.util.concurrent.Semaphore as an implementation of semaphore to save having to write one or use the
 //  Java basic wait/notify system.
+//
+//  Ignoring InterruptedException for Semaphore acquiring could be seen as being overly cavalier and
+//  introducing deadlock possibilities.  It is lucky this never seems to happen.
 
 import java.util.concurrent.Semaphore
 
@@ -41,24 +44,24 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   for ( number in 0 ..< numberOfCustomers ) {
     println ( "World : Customer ${number} enters the shop." )
     final customerThread = new Thread ( new Runnable ( ) {
-                                           public void run ( ) {
-                                             accessSeatsSemaphore.acquire ( )
-                                             if ( numberOfFreeSeats > 0 ) {
-                                               println ( "Shop : Customer ${number} takes a seat. ${numberOfWaitingSeats - numberOfFreeSeats} in use." )
-                                               --numberOfFreeSeats
-                                               customerSemaphore.release ( )
-                                               accessSeatsSemaphore.release ( )
-                                               barberSemaphore.acquire ( )
-                                               println ( "Shop : Customer ${number} leaving trimmed." )
-                                               ++customersTrimmed
-                                             }
-                                             else {
-                                               accessSeatsSemaphore.release ( )
-                                               println ( "Shop : Customer ${number} turned away." )
-                                               ++customersTurnedAway
-                                             }
-                                           }
-                                         } )
+                                          @Override public void run ( ) {
+                                            accessSeatsSemaphore.acquire ( )
+                                            if ( numberOfFreeSeats > 0 ) {
+                                              println ( "Shop : Customer ${number} takes a seat. ${numberOfWaitingSeats - numberOfFreeSeats} in use." )
+                                              --numberOfFreeSeats
+                                              customerSemaphore.release ( )
+                                              accessSeatsSemaphore.release ( )
+                                              barberSemaphore.acquire ( )
+                                              println ( "Shop : Customer ${number} leaving trimmed." )
+                                              ++customersTrimmed
+                                            }
+                                            else {
+                                              accessSeatsSemaphore.release ( )
+                                              println ( "Shop : Customer ${number} turned away." )
+                                              ++customersTurnedAway
+                                            }
+                                          }
+                                        } )
     customerThreads << customerThread
     customerThread.start ( )
     Thread.sleep ( nextCustomerWaitTime ( ) )
