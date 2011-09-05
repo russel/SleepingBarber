@@ -14,8 +14,8 @@ import groovy.transform.Immutable
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   final waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats )
-  final customersTurnedAway = 0
-  final customersTrimmed = 0
+  def customersTurnedAway = 0
+  def customersTrimmed = 0
   final barber = new Runnable ( ) {
     private working = true
     public void stopWork ( ) { working = false }
