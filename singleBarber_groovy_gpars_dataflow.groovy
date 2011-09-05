@@ -3,7 +3,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Groovy (http://groovy.codehaus.org) and GPars
 //  (http://gpars.codehaus.org) dataflow, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010--2011 Russel Winder
+//  Copyright © 2010–2011 Russel Winder
 
 @Grab ( 'org.codehaus.gpars:gpars:0.12-beta-1-SNAPSHOT' )
 
