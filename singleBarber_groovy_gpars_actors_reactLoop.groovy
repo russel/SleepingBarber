@@ -9,7 +9,7 @@
 //  are modelled by the message queue between the shop actor and the barber actor.  As the queue is an
 //  arbitrary length list, the shop object has to control how many customers are allowed into the queue.
 
-@Grab ( 'org.codehaus.gpars:gpars:0.12-beta-1-SNAPSHOT' )
+@Grab ( 'org.codehaus.gpars:gpars:0.12' )
 
 import groovy.transform.Immutable
 
@@ -31,7 +31,10 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   }
   def shop = group.actor {
     def seatsTaken = 0
-    loop {
+    def customersTrimmed = 0
+    def customersTurnedAway = 0 
+    while ( customersTrimmed + customersTurnedAway < numberOfCustomers ) {
+      //loop {
       react { customer ->
         switch ( customer ) {
          case Customer :
@@ -41,12 +44,14 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
              barber.send ( customer )
            }
            else {
+             ++customersTurnedAway
              println ( "Shop : Customer ${customer.id} turned away." )
              world.send ( customer )
            }
            break
          case SuccessfulCustomer :
            --seatsTaken
+           ++customersTrimmed
            println ( "Shop : Customer ${customer.customer.id} leaving trimmed." )
            world.send ( customer )
            break
@@ -54,6 +59,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
         }
       }
     }
+    println ( "Shop : Closing — ${customersTrimmed} trimmed and ${customersTurnedAway} turned away." )
   }
   world = group.actor {
     for ( number in  0 ..< numberOfCustomers ) {
@@ -65,11 +71,13 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     def customersTrimmed = 0
     while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
       react { customer ->
+        int id
         switch ( customer ) {
-         case Customer : ++customersTurnedAway ; break
-         case SuccessfulCustomer : ++customersTrimmed ; break
+         case Customer : ++customersTurnedAway ; id = customer.id ; break
+         case SuccessfulCustomer : ++customersTrimmed ; id = customer.c.id ; break
          default : throw new RuntimeException ( "World got a message of unexpected type ${customer.class}" )
         }
+        println ( "World : Customer ${id} exits the shop." )
       }
     }
     println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
