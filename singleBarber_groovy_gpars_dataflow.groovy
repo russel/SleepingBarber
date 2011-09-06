@@ -5,23 +5,23 @@
 //
 //  Copyright © 2010–2011 Russel Winder
 
-@Grab ( 'org.codehaus.gpars:gpars:0.12-beta-1-SNAPSHOT' )
+@Grab ( 'org.codehaus.gpars:gpars:0.12' )
 
 import groovy.transform.Immutable
 
-import groovyx.gpars.dataflow.DataFlow
-import groovyx.gpars.dataflow.DataFlowQueue
+import groovyx.gpars.dataflow.Dataflow
+import groovyx.gpars.dataflow.DataflowQueue
 
 @Immutable class Customer { Integer id }
 @Immutable class SuccessfulCustomer { Customer customer }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
-  def worldToShop = new DataFlowQueue ( )
-  def shopToBarber = new DataFlowQueue ( )
-  def barberToShop = new DataFlowQueue ( )
-  def shopToWorld = new DataFlowQueue ( )
-  final barber = DataFlow.task {
+  def worldToShop = new DataflowQueue ( )
+  def shopToBarber = new DataflowQueue ( )
+  def barberToShop = new DataflowQueue ( )
+  def shopToWorld = new DataflowQueue ( )
+  final barber = Dataflow.task {
     while ( true ) {
       def customer = shopToBarber.val
       assert customer instanceof Customer
@@ -31,10 +31,10 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
       barberToShop << customer
     }
   }
-  final shop = DataFlow.task {
+  final shop = Dataflow.task {
     def seatsTaken = 0
     while ( true ) {
-      def selector = DataFlow.select ( barberToShop , worldToShop )
+      def selector = Dataflow.select ( barberToShop , worldToShop )
       def item = selector.select ( )
       switch ( item.index ) {
        case 0 : //////// From the Barber ////////
