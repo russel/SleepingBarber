@@ -48,4 +48,4 @@ for item in Glob ( '*.scala' ) :
 #  The Java support and the above Scala commands so not put all the generated class files into the DAG and
 #  so they do not get automatically removed on a clean.  So we have to hack it :-(
 
-Clean ( '.' , Delete ( Glob ( '*.class' ) ) )
+Clean ( '.' , Glob ( '*.class' ) )
