@@ -12,7 +12,7 @@
 //  This is only one of a potentially infinite number of correct versions.
 
 @Grab ( 'org.codehaus.jcsp:jcsp:1.1-rc5' )
-@Grab ( 'org.codehaus.gpars:gpars:0.11' )
+@Grab ( 'org.codehaus.gpars:gpars:0.12' )
 
 import groovy.transform.Immutable
 
