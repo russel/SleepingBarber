@@ -17,6 +17,10 @@ public class SingleBarber_Java_ForkJoin {
     public final int id ;
     public Customer ( final int id ) { this.id = id ; }
   }
+  private final static class SuccessfulCustomer {
+    public final Customer c ;
+    public SuccessfulCustomer ( final Customer c ) { this.c = c ; }
+  } 
   private final static class RandomCallingFunction {
     private final int scale ;
     private final int offset ;
@@ -27,48 +31,107 @@ public class SingleBarber_Java_ForkJoin {
     public int call ( ) { return (int)( Math.random ( ) * scale ) + offset ; }
   }
   private void runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
-                    final RandomCallingFunction hairTrimTime , final RandomCallingFunction nextCustomerWaitTime ) {
+                    final RandomCallingFunction hairTrimTime , final RandomCallingFunction nextCustomerWaitTime )
+    throws InterruptedException {
     final ForkJoinPool pool = new ForkJoinPool ( ) ;
     final ArrayBlockingQueue<Customer> waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats ) ;
+    final ArrayBlockingQueue<Customer> toShop = new ArrayBlockingQueue<Customer> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<SuccessfulCustomer> fromChair = new ArrayBlockingQueue<SuccessfulCustomer> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<Object> fromShop = new ArrayBlockingQueue<Object> ( numberOfCustomers ) ;
     final ForkJoinTask<Integer> barber = pool.submit ( new Callable<Integer> ( ) {
         @Override public Integer call ( ) {
           int customersTrimmed = 0 ;
           while ( true ) {
             try {
+              //  Use take here to simulate barber sleeping if there are no customers by blocking.
               final Customer customer = waitingChairs.take ( ) ;
-              if ( customer.id < 0 ) break ;
+              if ( customer.id < 0 ) {
+                fromChair.put ( new SuccessfulCustomer ( customer ) ) ;
+                break ;
+              }
               System.out.println ( "Barber : Starting Customer " + customer.id + "." ) ;
               try { Thread.sleep ( hairTrimTime.call ( ) ) ; }
               catch ( InterruptedException iiee ) { /* Intentionally left blank. */ }
               System.out.println ( "Barber : Finished Customer " + customer.id + "." ) ;
               ++customersTrimmed ;
-              System.out.println ( "Shop : Customer " + customer.id + " leaving trimmed." ) ;
+              fromChair.put ( new SuccessfulCustomer ( customer ) ) ;
             }
-            catch ( InterruptedException ie ) { ie.printStackTrace ( ) ; }
+            catch ( InterruptedException ie ) { throw new RuntimeException ( ie ) ; }
           }
+          System.out.println ( "Barber : Work over for the day, trimmed " + customersTrimmed + "." ) ;
           return customersTrimmed ;
         }
       } ) ;
+    final ForkJoinTask<Integer> shop = pool.submit ( new Runnable ( ) {
+        @Override public void run ( ) {
+          int customersTurnedAway = 0 ;
+          int customersTrimmed = 0 ;
+          while ( true ) {
+            final Customer customer = toShop.poll ( ) ;
+            if ( customer != null ) {
+              if ( customer.id == -1 ) {
+                try { waitingChairs.put ( customer ) ; }
+                catch ( InterruptedException ie ) { throw new RuntimeException ( ie ) ; }
+              }
+              else {
+                if ( waitingChairs.offer ( customer ) ) {
+                  System.out.println ( "Shop : Customer " + customer.id + " takes a seat. " + waitingChairs.size ( ) + " in use." ) ;
+                }
+                else {
+                  ++customersTurnedAway ;
+                  System.out.println ( "Shop : Customer " + customer.id + " turned away." ) ;
+                  try { fromShop.put ( customer ) ; }
+                  catch ( InterruptedException ie ) { throw new RuntimeException ( ie ) ; }
+                }
+              }
+            }
+            final SuccessfulCustomer successfulCustomer = fromChair.poll ( ) ;
+            if ( successfulCustomer != null ) {
+              if ( successfulCustomer.c.id == -1 ) { break ; }
+              else {
+                ++customersTrimmed ;
+                System.out.println ( "Shop : Customer " + successfulCustomer.c.id + " leaving trimmed." ) ;
+                try { fromShop.put ( successfulCustomer ) ; }
+                catch ( InterruptedException ie ) { throw new RuntimeException ( ie ) ; }
+              }
+            }
+          }
+          System.out.println ( "Shop : Closing — " + customersTrimmed + " timmed and " + customersTurnedAway + " turned away." ) ;
+        }
+      } , 0 ) ;
+    for ( int number = 0 ; number < numberOfCustomers ; ++number ) {
+      Thread.sleep ( nextCustomerWaitTime.call ( ) ) ;
+      System.out.println ( "World : Customer " + number + " enters the shop." ) ;
+      toShop.put ( new Customer ( number ) ) ;
+    }
+    waitingChairs.put ( new Customer ( -1 ) ) ;
+    int customersTrimmed = 0 ;
     int customersTurnedAway = 0 ;
     for ( int number = 0 ; number < numberOfCustomers ; ++number ) {
-      try { Thread.sleep ( nextCustomerWaitTime.call ( ) ) ; }
-      catch ( InterruptedException ie ) { /* Intentionally left blank. */ }
-      System.out.println ( "World : Customer " + number + " enters the shop." ) ;
-      final Customer customer = new Customer ( number ) ;
-      if ( waitingChairs.offer ( customer ) ) {
-        System.out.println ( "Shop : Customer " + customer.id + " takes a seat. " + waitingChairs.size ( ) + " in use." ) ;
+      final Object customer = fromShop.take ( ) ;
+      int id ;
+      if ( customer instanceof SuccessfulCustomer ) {
+        ++customersTrimmed ;
+        id = ( (SuccessfulCustomer)customer ).c.id ;
       }
-      else {
+      else if ( customer instanceof Customer ) {
         ++customersTurnedAway ;
-        System.out.println ( "Shop : Customer " + customer.id + " turned away." ) ;
+        id = ( (Customer)customer ).id ;
       }
+      else { throw new RuntimeException ( "Non customer exited the shop." ) ; }
+      System.out.println ( "World : Customer " + id + " exits the shop." ) ;
     }
-    try { waitingChairs.put ( new Customer ( -1 ) ) ; }
-    catch ( InterruptedException ie ) { /* Intentionally left blank. */ }
-    System.out.println ( "\nTrimmed " + barber.join ( ) + " and turned away " + customersTurnedAway + " today." ) ;
+    //  If we don't get here then Sweeney Todd is the barber — we have not got as many live customers back
+    //  as we put in.
+    System.out.println ( "World : Time to close up." ) ;
+    final int barberCount =  barber.join ( ) ;
+    if ( barberCount != customersTrimmed ) {
+      System.out.println ( "World : Barber claimed " +  barberCount + ", but the workld counted " + customersTrimmed + "." ) ;
+    }
+    System.out.println ( "\nTrimmed " + barberCount + " and turned away " + customersTurnedAway + " today." ) ;
     pool.shutdown ( ) ;
    }
-  public static void main ( final String[] args ) {
+  public static void main ( final String[] args ) throws InterruptedException {
     ( new SingleBarber_Java_ForkJoin ( ) ).runSimulation ( 20 , 4 ,
                                                            new RandomCallingFunction ( 60 , 10 ) ,
                                                            new RandomCallingFunction ( 20 , 10 ) ) ;
