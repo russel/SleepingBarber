@@ -36,4 +36,16 @@ javaEnvironment = Environment ( tools = [ 'javac' ] ,
                                 )
 for  item in Glob ( '*.java' ) :
     className , extension = os.path.splitext ( item.name )
-    cppEnvironment.Command ( 'run_' + className , javaEnvironment.Java ( '.' , item ) , 'java -cp .:' + ':'.join ( javaEnvironment['JAVACLASSPATH'] ) + ' ' + className ) 
+    javaEnvironment.Command ( 'run_' + className , javaEnvironment.Java ( '.' , item ) , 'java -cp .:' + ':'.join ( javaEnvironment['JAVACLASSPATH'] ) + ' ' + className ) 
+
+
+scalaEnvironment = Environment ( tools = [ ] , ENV = os.environ )
+
+for item in Glob ( '*.scala' ) :
+    className , extension = os.path.splitext ( item.name )
+    scalaEnvironment.Command ( 'run_' + className , scalaEnvironment.Command  ( className + '.class' , item.name , 'scalac -optimise ' + item.name ) , 'scala ' + className )
+
+#  The Java support and the above Scala commands so not put all the generated class files into the DAG and
+#  so they do not get automatically removed on a clean.  So we have to hack it :-(
+
+Clean ( '.' , Delete ( Glob ( '*.class' ) ) )
