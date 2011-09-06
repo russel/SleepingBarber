@@ -34,6 +34,8 @@ public class SingleBarber_Java_Threads_NoShop {
     @Override public void run ( ) {
       while ( working || ( waitingChairs.size ( ) > 0 ) ) {
         try {
+          //  Use take here to simulate barber sleeping if there are no customers by blocking.  It means we
+          //  have to use an interrupt when the shop gets closed.
           final Customer customer = waitingChairs.take ( ) ;
           System.out.println ( "Barber : Starting Customer " + customer.id + "." ) ;
           try { Thread.sleep ( hairTrimTime.call ( ) ) ; }
@@ -43,6 +45,7 @@ public class SingleBarber_Java_Threads_NoShop {
           System.out.println ( "Shop : Customer " + customer.id + " leaving trimmed." ) ;
         }
         catch ( InterruptedException ie ) { /* Intentionally left blank. */ }
+        System.out.println ( "Barber : Work over for the day." ) ;
       }
     }
     public int getCustomersTrimmed ( ) { return customersTrimmed ; }
