@@ -21,8 +21,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     public void stopWork ( ) { working = false }
     @Override public void run ( ) {
       while ( working || ( waitingChairs.size ( ) > 0 ) ) {
-        //  Use take here to simulate barber sleeping if there are no customers by blocking.  It means we
-        //  have to use an interrupt when the shop gets closed.
+        //  Use take here to simulate barber sleeping if there are no customers by blocking.
         def customer = waitingChairs.take ( )
         assert customer instanceof Customer
         println ( "Barber : Starting Customer ${customer.id}." )
