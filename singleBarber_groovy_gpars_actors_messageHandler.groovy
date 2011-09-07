@@ -20,7 +20,7 @@ import groovyx.gpars.group.DefaultPGroup
 @Immutable class SuccessfulCustomer { Customer customer }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
-                    final Closure nextCustomerWaitTime , final Closure hairTrimTime ) {
+                    final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   def group = new DefaultPGroup ( )
   def world // Just to have the variable so it can be used.
   def barber = group.reactor { customer ->
