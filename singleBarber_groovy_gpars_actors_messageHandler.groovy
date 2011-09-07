@@ -6,12 +6,11 @@
 //  Copyright © 2009–2011 Russel Winder
 //
 //  The barber sleeping is modelled by the barber actor blocking awaiting a message.  The barber's chairs
-//  are modelled by the message queue between the shop actor and the barber actor.  As the queue is an
-//  arbitrary length list, the shop object has to control how many customers are allowed into the queue.
-//
-//  This is only one of a potentially infinite number of correct versions.
+//  are modelled by the barber actor message queue.  As the queue is an arbitrary length list, the shop
+//  object has to control how many customers are allowed into the queue.
 
-@Grab ( 'org.codehaus.gpars:gpars:0.12' )
+//@Grab ( 'org.codehaus.gpars:gpars:0.12' )
+@Grab ( 'org.codehaus.gpars:gpars:1.0-SNAPSHOT' )
 
 import groovy.transform.Immutable
 
@@ -21,8 +20,9 @@ import groovyx.gpars.group.DefaultPGroup
 @Immutable class SuccessfulCustomer { Customer customer }
 
 def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
-                    final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
+                    final Closure nextCustomerWaitTime , final Closure hairTrimTime ) {
   def group = new DefaultPGroup ( )
+  def world // Just to have the variable so it can be used.
   def barber = group.reactor { customer ->
     assert customer instanceof Customer
     println ( "Barber : Starting Customer ${customer.id}." )
@@ -35,35 +35,56 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     def isOpen = true
     def customersTurnedAway = 0
     def customersTrimmed = 0
-    when { Customer message ->
+    when { Customer customer ->
       if ( seatsTaken <= numberOfWaitingSeats ) {
         ++seatsTaken
-        println ( "Shop : Customer ${message.id} takes a seat. ${seatsTaken} in use." )
-        barber.send ( message )
+        println ( "Shop : Customer ${customer.id} takes a seat. ${seatsTaken} in use." )
+        barber << customer
       }
       else {
-        println ( "Shop : Customer ${message.id} turned away." )
+        println ( "Shop : Customer ${customer.id} turned away." )
         ++customersTurnedAway
+        world << customer
       }
     }
-    when { SuccessfulCustomer message ->
+    when { SuccessfulCustomer successfulCustomer ->
       --seatsTaken
       ++customersTrimmed
-      println ( "Shop : Customer ${message.customer.id} leaving trimmed." )
+      println ( "Shop : Customer ${successfulCustomer.customer.id} leaving trimmed." )
+      world << successfulCustomer
       if ( ! isOpen && ( seatsTaken == 0 ) ) {
-        println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
-        stop ( )
+        println ( "Shop : Closing — ${customersTrimmed} trimmed and ${customersTurnedAway} turned away." )
+        world << 'closed'
+        terminate ( )
       }
     }
     when { String message -> isOpen = false }
+  }  
+  world = group.messageHandler {
+    def customersTurnedAway = 0
+    def customersTrimmed = 0
+    def customerExit = { id -> println ( "World : Customer ${id} exits the shop." ) }
+    when {  Customer customer ->
+      ++customersTurnedAway
+      customerExit ( customer.id )
+    }
+    when { SuccessfulCustomer successfulCustomer ->
+      ++customersTrimmed
+      customerExit ( successfulCustomer.customer.id )
+    }
+    when { String message ->
+      assert message == 'closed'
+      println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
+      terminate ( )
+    }
   }
   for ( number in  0 ..< numberOfCustomers ) {
     Thread.sleep ( nextCustomerWaitTime ( ) )
     println ( "World : Customer ${number} enters the shop." )
-    shop.send ( new Customer ( number ) )
+    shop << new Customer ( number )
   }
-  shop.send ( '' )
-  shop.join ( )
+  shop << 'closing'
+  world.join ( )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
