@@ -75,7 +75,6 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     }
     def customersTurnedAway = 0
     def customersTrimmed = 0
-    //while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
     loop {
       if ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
         react { customer ->
