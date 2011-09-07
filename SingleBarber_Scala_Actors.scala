@@ -3,6 +3,12 @@
 //
 //  Copyright © 2011 Russel Winder
 
+//  The barber sleeping is modeled byt the barber actor using a blocking read on its message queue.  The
+//  barber seats are modeled by the barber actor message queue so the shop actor is responsible for tracking
+//  the number of customers sent to the barber actor.  The world actor only captures customers leaving the
+//  shop, customers are fed into the shop by the main thread, which then waits for the actors to do their
+//  work.
+
 import scala.actors.Actor
 import scala.actors.Actor._
 import scala.util.Random
@@ -13,7 +19,7 @@ object SingleBarber_Scala_Actors extends App {
   case object CloseShop
   case object BarberStoppedWork
   def runSimulation ( numberOfCustomers : Int , numberOfWaitingSeats : Int , hairTrimTime : ( ) => Int , nextCustomerWaitingTime : ( ) => Int ) {
-    //  Due to the cross-referencesof the various actor objects, the type inference system cannot resolve
+    //  Due to the cross-references of the various actor objects, the type inference system cannot resolve
     //  the types appropriately, and so the types of some of the actors must be specified, so delcare the
     //  types of all of them.  Moreover, the definitions have to be lazy so as to deal with the order of use
     //  versus definition.
@@ -68,6 +74,8 @@ object SingleBarber_Scala_Actors extends App {
       }
     }
     lazy val world : Actor = Actor.actor {
+      //  We know that the Vogon constructor fleet is coming to destroy the world to make way for an
+      //  interstellar by-pass.
       var notVogoned = true
       var customersTurnedAway = 0
       var customersTrimmed = 0
@@ -86,7 +94,7 @@ object SingleBarber_Scala_Actors extends App {
             notVogoned = false
         }
       }
-      println ( "World : Time to explode" )
+      println ( "World : The Vogons have arrived. Time to explode." )
     }
     barber.start ( )
     shop.start ( )
