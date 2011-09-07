@@ -7,6 +7,8 @@
 
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Callable
+
+@Grab ( "org.codehaus.jsr166-mirror:jsr166y:1.7.0" )
 import jsr166y.ForkJoinPool
 
 import groovy.transform.Immutable

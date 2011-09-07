@@ -53,6 +53,9 @@ public class SingleBarber_Java_Threads {
           //  have to use an interrupt when the shop gets closed.
           final Customer customer = waitingChairs.take ( ) ;
           System.out.println ( "Barber : Starting Customer " + customer.id + "." ) ;
+          //  If we don't deal with InterruptedException here then (because we ignore the interrupt in an
+          //  outer scope) we get the "Sweeney Todd" effect, one customer (or more) simply disappears from
+          //  the universe.
           try { Thread.sleep ( hairTrimTime.call ( ) ) ; }
           catch ( InterruptedException iiee ) { /* Intentionally left blank. */ }
           ++customersTrimmed ;
@@ -123,7 +126,6 @@ public class SingleBarber_Java_Threads {
       System.out.println ( "World : Non-existent." ) ;
     }
   }
-  
   private void runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final RandomCallingFunction hairTrimTime , final RandomCallingFunction nextCustomerWaitTime )
     throws InterruptedException {
