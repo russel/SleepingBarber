@@ -9,7 +9,8 @@
 //  are modelled by the message queue between the shop actor and the barber actor.  As the queue is an
 //  arbitrary length list, the shop object has to control how many customers are allowed into the queue.
 
-@Grab ( 'org.codehaus.gpars:gpars:0.12' )
+//@Grab ( 'org.codehaus.gpars:gpars:0.12' )
+@Grab ( 'org.codehaus.gpars:gpars:1.0-SNAPSHOT' )
 
 import groovy.transform.Immutable
 
@@ -22,6 +23,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
                     final Closure hairTrimTime , final Closure nextCustomerWaitTime ) {
   def group = new DefaultPGroup ( )
   def world // Just to have the variable so it can be used.
+  //  This barber has no way of knocking off, the only way out of work is termination. 
   def barber = group.reactor { customer ->
     assert customer instanceof Customer
     println ( "Barber : Starting Customer ${customer.id}." )
@@ -33,33 +35,37 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     def seatsTaken = 0
     def customersTrimmed = 0
     def customersTurnedAway = 0 
-    while ( customersTrimmed + customersTurnedAway < numberOfCustomers ) {
-      //loop {
-      react { customer ->
-        switch ( customer ) {
-         case Customer :
-           if ( seatsTaken <= numberOfWaitingSeats ) {
-             ++seatsTaken
-             println ( "Shop : Customer ${customer.id} takes a seat. ${seatsTaken} in use." )
-             barber.send ( customer )
-           }
-           else {
-             ++customersTurnedAway
-             println ( "Shop : Customer ${customer.id} turned away." )
+    loop {
+      if ( customersTrimmed + customersTurnedAway < numberOfCustomers ) {
+        react { customer ->
+          switch ( customer ) {
+           case Customer :
+             if ( seatsTaken <= numberOfWaitingSeats ) {
+               ++seatsTaken
+               println ( "Shop : Customer ${customer.id} takes a seat. ${seatsTaken} in use." )
+               barber.send ( customer )
+             }
+             else {
+               ++customersTurnedAway
+               println ( "Shop : Customer ${customer.id} turned away." )
+               world.send ( customer )
+             }
+             break
+           case SuccessfulCustomer :
+             --seatsTaken
+             ++customersTrimmed
+             println ( "Shop : Customer ${customer.customer.id} leaving trimmed." )
              world.send ( customer )
-           }
-           break
-         case SuccessfulCustomer :
-           --seatsTaken
-           ++customersTrimmed
-           println ( "Shop : Customer ${customer.customer.id} leaving trimmed." )
-           world.send ( customer )
-           break
-         default : throw new RuntimeException ( "Shop got a message of unexpected type ${customer.class}" )
+             break
+           default : throw new RuntimeException ( "Shop got a message of unexpected type ${customer.class}" )
+          }
         }
       }
+      else {
+        println ( "Shop : Closing — ${customersTrimmed} trimmed and ${customersTurnedAway} turned away." )
+        terminate ( )
+      }
     }
-    println ( "Shop : Closing — ${customersTrimmed} trimmed and ${customersTurnedAway} turned away." )
   }
   world = group.actor {
     for ( number in  0 ..< numberOfCustomers ) {
@@ -69,18 +75,24 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     }
     def customersTurnedAway = 0
     def customersTrimmed = 0
-    while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
-      react { customer ->
-        int id
-        switch ( customer ) {
-         case Customer : ++customersTurnedAway ; id = customer.id ; break
-         case SuccessfulCustomer : ++customersTrimmed ; id = customer.c.id ; break
-         default : throw new RuntimeException ( "World got a message of unexpected type ${customer.class}" )
+    //while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
+    loop {
+      if ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
+        react { customer ->
+          int id
+          switch ( customer ) {
+           case Customer : ++customersTurnedAway ; id = customer.id ; break
+           case SuccessfulCustomer : ++customersTrimmed ; id = customer.customer.id ; break
+           default : throw new RuntimeException ( "World got a message of unexpected type ${customer.class}" )
+          }
+          println ( "World : Customer ${id} exits the shop." )
         }
-        println ( "World : Customer ${id} exits the shop." )
+      }
+      else {
+        println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
+        terminate ( )
       }
     }
-    println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
   }
   //  Delay terminating the program till the world has got back all the customers it sent into the shop.  If
   //  we get stuck here then the obvious inference is that Sweeney Todd is the barber and we do not have
