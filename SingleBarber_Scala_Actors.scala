@@ -9,7 +9,7 @@ import scala.util.Random
 
 object SingleBarber_Scala_Actors extends App {
   case class Customer ( id : Int )
-  case class SuccessfulCustomer ( c : Customer )
+  case class SuccessfulCustomer ( customer : Customer )
   case object CloseShop
   case object BarberStoppedWork
   def runSimulation ( numberOfCustomers : Int , numberOfWaitingSeats : Int , hairTrimTime : ( ) => Int , nextCustomerWaitingTime : ( ) => Int ) {
@@ -56,43 +56,47 @@ object SingleBarber_Scala_Actors extends App {
           case successfulCustomer : SuccessfulCustomer =>
             seatsFilled -= 1
             customersTrimmed += 1
-            println ( "Shop : Customer " + successfulCustomer.c.id + " leaving trimmed." )
+            println ( "Shop : Customer " + successfulCustomer.customer.id + " leaving trimmed." )
             world ! successfulCustomer
           case CloseShop =>
             barber ! CloseShop
           case BarberStoppedWork =>
             println ( "Shop : Closing — " + customersTrimmed + " trimmed and " + customersTurnedAway + " turned away." )
             open = false
+            world ! CloseShop
         }
       }
     }
     lazy val world : Actor = Actor.actor {
-      for ( number <- 0 to numberOfCustomers ) {
-        Thread.sleep ( nextCustomerWaitingTime ( ) )
-        println ( "World : Customer " + number + " enters the shop." )
-        shop ! new Customer ( number )
-      }
+      var notVogoned = true
       var customersTurnedAway = 0
       var customersTrimmed = 0
-      for ( number <- 0 to numberOfCustomers ) {
+      while ( notVogoned ) {
         var id = 0
+        def message ( id : Int ) = { println ( "World : Customer " + id + " exits the shop." ) }
         receive {
           case customer : Customer =>
             customersTurnedAway += 1
-            id = customer.id
+            message ( customer.id )
           case successfulCustomer : SuccessfulCustomer =>
             customersTrimmed += 1
-            id = successfulCustomer.c.id
+            message ( successfulCustomer.customer.id )
+          case CloseShop =>
+            println ( "\nTrimmed " + customersTrimmed + " and turned away " + customersTurnedAway + " today." )
+            notVogoned = false
         }
-        println ( "World : Customer " + id + " exits the shop." )
       }
-      println ( "World : Time to close up." )
-      shop ! CloseShop
-      println ( "\nTrimmed " + customersTrimmed + " and turned away " + customersTurnedAway + " today." )
+      println ( "World : Time to explode" )
     }
     barber.start ( )
     shop.start ( )
     world.start ( )
+    for ( number <- 0 to numberOfCustomers ) {
+      Thread.sleep ( nextCustomerWaitingTime ( ) )
+      println ( "World : Customer " + number + " enters the shop." )
+      shop ! new Customer ( number )
+    }
+    shop ! CloseShop
   }
   val r = new Random ( )
   runSimulation ( 20 , 4 , ( ) => r.nextInt ( 60 ) + 10 , ( ) => r.nextInt ( 20 ) + 10 )
