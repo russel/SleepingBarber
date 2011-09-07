@@ -3,7 +3,7 @@
 //
 //  Copyright © 2011 Russel Winder
 
-//  The barber sleeping is modeled byt the barber actor using a blocking read on its message queue.  The
+//  The barber sleeping is modeled by the barber actor using a blocking read on its message queue.  The
 //  barber seats are modeled by the barber actor message queue so the shop actor is responsible for tracking
 //  the number of customers sent to the barber actor.  The world actor only captures customers leaving the
 //  shop, customers are fed into the shop by the main thread, which then waits for the actors to do their

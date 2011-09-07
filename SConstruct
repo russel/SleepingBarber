@@ -15,7 +15,8 @@ dEnvironment = Environment (
     DFLAGS = [ '-O' , '-release' , '-inline' ] ,
    )
 for item in Glob ( '*.d' ) :
-    dEnvironment.Program ( item )
+    name , extension = os.path.splitext ( item.name )
+    dEnvironment.Command ( 'run_' + name , dEnvironment.Program ( item ) , './$SOURCE' )
 
 justThreadPro_home = os.environ['HOME'] + '/lib.Linux.x86_64/JustThreadPro'
 cppEnvironment = Environment (
@@ -28,7 +29,7 @@ cppEnvironment = Environment (
     )
 for item in Glob ( '*.cpp' ) :
     name , extension = os.path.splitext ( item.name )
-    cppEnvironment.Command ( 'run_' + name , cppEnvironment.Program ( item ) , "./$SOURCE" ) 
+    cppEnvironment.Command ( 'run_' + name , cppEnvironment.Program ( item ) , './$SOURCE' ) 
 
 javaEnvironment = Environment ( tools = [ 'javac' ] ,
                                 JAVACFLAGS = [ '-source' , '6' , '-encoding' , 'utf-8' ] ,
