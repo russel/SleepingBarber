@@ -88,6 +88,10 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     println ( "World : Customer ${number} enters the shop." )
     worldToShop << new Customer ( number )
   }
+  //
+  //  Wait for all activities to complete.
+  //
+  world.join ( )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
