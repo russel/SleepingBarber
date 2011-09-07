@@ -61,33 +61,28 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
     }
   }
   //
-  //  This is just the world into which customers come having been in the shop.
-  //
-  final world = Dataflow.task {
-    def customersTurnedAway = 0
-    def customersTrimmed = 0
-    while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
-      def customer = shopToWorld.val
-      if ( customer instanceof SuccessfulCustomer ) {
-        ++customersTrimmed
-        println ( "World : Customer ${customer.customer.id} exits shop trimmed." )
-      }
-      else {
-        assert customer instanceof Customer
-        ++customersTurnedAway
-        println ( "World : Customer ${customer.id} exits shop without being trimmed." )
-      }
-    }
-    println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
-  }
-  //
-  //  The master thread drives the dataflow — customers enter the shop from here.
+  //  The world is run in the master thread so there is a driver of the dataflow.
   //
   for ( number in 0 ..< numberOfCustomers ) {
     Thread.sleep ( nextCustomerWaitTime ( ) )
     println ( "World : Customer ${number} enters the shop." )
     worldToShop << new Customer ( number )
   }
+  def customersTurnedAway = 0
+  def customersTrimmed = 0
+  while ( customersTurnedAway + customersTrimmed < numberOfCustomers ) {
+    def customer = shopToWorld.val
+    if ( customer instanceof SuccessfulCustomer ) {
+      ++customersTrimmed
+      println ( "World : Customer ${customer.customer.id} exits shop trimmed." )
+    }
+    else {
+      assert customer instanceof Customer
+      ++customersTurnedAway
+      println ( "World : Customer ${customer.id} exits shop without being trimmed." )
+    }
+  }
+  println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
 }
 
 runSimulation ( 20 , 4 , { ( Math.random ( ) * 60 + 10 ) as int }, { ( Math.random ( ) * 20 + 10 ) as int } )
