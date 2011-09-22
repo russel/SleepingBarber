@@ -111,7 +111,7 @@ void world ( immutable ( int ) numberOfCustomers ) {
              ( OwnerTerminated ) { }
              ) ;
   }
-  writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today.\n" ) ;
+  writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today." ) ;
 }
 
 
