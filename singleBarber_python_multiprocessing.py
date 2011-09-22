@@ -4,7 +4,7 @@
 #  This is a model of the "The Sleeping Barber" problem using Python and the multiprocessing package,
 #  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009-10 Russel Winder
+#  Copyright © 2009–2011 Russel Winder
 
 #  The barber's shop and the barber are modelled using processes each with their own event queue.  In effect
 #  this is an Actor Model reactor approach with each process using a blocking read on its event queue.  The
@@ -33,7 +33,7 @@ class Barber ( multiprocessing.Process ) :
     def run ( self ) :
         while True :
             customer = self.queue.get ( )
-            assert type ( customer ) == Customer
+            assert isinstance ( customer , Customer )
             print ( 'Barber : Starting Customer ' + str ( customer.id ) )
             time.sleep ( self.hairTrimTime ( ) )
             print ( 'Barber : Finished Customer ' + str ( customer.id ) )
@@ -53,7 +53,7 @@ class Shop ( multiprocessing.Process ) :
     def run ( self ) :
         while True :
             event = self.queue.get ( )
-            if type ( event ) == Customer :
+            if isinstance ( event , Customer ) :
                 if self.seatsTaken < self.numberOfWaitingSeats :
                     self.seatsTaken += 1
                     print ( 'Shop : Customer ' + str ( event.id ) + ' takes a seat. ' + str ( self.seatsTaken ) + ' in use.' )
@@ -61,9 +61,9 @@ class Shop ( multiprocessing.Process ) :
                 else :
                     self.customersTurnedAway += 1
                     print ( 'Shop : Customer ' + str ( event.id ) +' turned away.' )
-            elif type ( event ) == SuccessfulCustomer :
+            elif isinstance ( event , SuccessfulCustomer ) :
                 customer = event.customer
-                assert type ( customer ) == Customer
+                assert isinstance ( customer , Customer )
                 self.seatsTaken -= 1
                 self.customersTrimmed += 1
                 print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
@@ -71,7 +71,7 @@ class Shop ( multiprocessing.Process ) :
                     print ( '\nTrimmed ' + str ( self.customersTrimmed ) + ' and turned away ' + str ( self.customersTurnedAway ) + ' today.' )
                     self.barber.terminate ( )
                     return
-            elif type ( event ) == str : self.isOpen = False
+            elif isinstance ( event , str ) : self.isOpen = False
             else : raise ValueError ( 'Object of unexpected type received.' )
 
 def world ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :

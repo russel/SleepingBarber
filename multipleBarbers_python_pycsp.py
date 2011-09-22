@@ -4,7 +4,7 @@
 #  This is a model of the "The Sleeping Barber" problem using Python (http://www.python.org) and PyCSP
 #  (http://code.google.com/p/pycsp/), cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009-10 Russel Winder
+#  Copyright © 2009–2011 Russel Winder
 
 #  The barber's shop and the barber are modelled with processes.  Channels are used to pass customer objects
 #  from the shop to the barber.  The current arrangement assumes there is only one barber.
@@ -28,7 +28,7 @@ def barber ( identity , hairTrimTime , fromShopIn , toShopOut ) :
         print  ( 'Barber ' + str ( identity ) + ' : ' + str ( message ) )
     while True :
         customer = fromShopIn ( )
-        assert type ( customer ) == Customer
+        assert isinstance ( customer , Customer )
         _message ( 'Barber : Starting Customer ' + str ( customer.id ) )
         time.sleep ( hairTrimTime ( ) )
         _message ( 'Barber : Finished Customer ' + str ( customer.id ) )
@@ -43,7 +43,7 @@ def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts ) :
     try :
         while True :
             customer = fromWorld ( )
-            assert type ( customer ) == Customer
+            assert isinstance ( customer , Customer )
             if len ( seats ) < numberOfWaitingSeats :
                 seats.append ( customer )
                 print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( len ( seats ) ) + ' in use.' )
@@ -65,7 +65,7 @@ def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts ) :
 def shopOut ( fromBarber , toAccounts ) :
     while True :
         customer = fromBarber ( )
-        assert type ( customer ) == Customer
+        assert isinstance ( customer , Customer )
         print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
         toAccounts ( customer )
 

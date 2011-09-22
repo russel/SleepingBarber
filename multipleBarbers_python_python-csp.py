@@ -4,7 +4,7 @@
 #  This is a model of the "The Sleeping Barber" problem using Python (http://www.python.org) and Python-CSP
 #  (http://code.google.com/p/python-csp/), cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009-10 Russel Winder
+#  Copyright © 2009–2011 Russel Winder
 
 #  The barber's shop and the barber are modelled with processes.  Channels are used to pass customer objects
 #  from the shop to the barber.  The current arrangement assumes there is only one barber.
@@ -40,7 +40,7 @@ def barber ( identity , hairTrimTime , shopChannel ) :
         print  ( 'Barber ' + str ( identity ) + ' : ' + str ( message ) )
     while True :
         customer = shopChannel.read ( )
-        assert type ( customer ) == Customer
+        assert isinstance ( customer , Customer )
         _message ( 'Starting Customer ' + str ( customer.id ) )
         time.sleep ( hairTrimTime ( ) )
         _message ( 'Finished Customer ' + str ( customer.id ) )
@@ -59,7 +59,7 @@ def shop ( numberOfWaitingSeats , worldChannel , barberChannel ) :
         #  real problem.
         alt = Alt ( worldChannel , barberChannel )
         event = alt.select ( )
-        if type ( event ) == Customer :
+        if isinstance ( event , Customer ) :
             if seatsTaken < numberOfWaitingSeats :
                 seatsTaken += 1
                 print ( 'Shop : Customer ' + str( event.id ) + ' takes a seat. ' + str ( seatTaken ) + ' in use.' )
@@ -67,9 +67,9 @@ def shop ( numberOfWaitingSeats , worldChannel , barberChannel ) :
             else :
                 customersTurnedAway += 1
                 print ( 'Shop : Customer ' + str ( event.id ) + ' turned away.' )
-        elif type ( event ) == SuccessfulCustomer :
+        elif isinstance ( event , SuccessfulCustomer ) :
             customer = event.customer
-            assert type ( customer ) == Customer
+            assert isinstance ( customer , Customer )
             self.seatsTaken -= 1
             self.customersTrimmed += 1
             print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
@@ -77,7 +77,7 @@ def shop ( numberOfWaitingSeats , worldChannel , barberChannel ) :
                 print ( '\nTrimmed ' + str ( self.customersTrimmed ) + ' and turned away ' + str ( self.customersTurnedAway ) + ' today.' )
                 self.barber.terminate ( )
                 return
-        elif type ( event ) == str : self.isOpen = False
+        elif isinstance ( event , str ) : self.isOpen = False
         else : raise ValueError ( 'Object of unexpected type received.' )
 
 @process

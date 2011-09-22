@@ -4,7 +4,7 @@
 #  This is a model of the "The Sleeping Barber" problem using Python-CSP,
 #  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009-10 Russel Winder
+#  Copyright © 2009–2011 Russel Winder
 
 #  The barber's shop and the barber are modelled with processes.  Channels are used to pass customer objects
 #  from the shop to the barber.  The current arrangement assumes there is only one barber.
@@ -25,7 +25,7 @@ class Customer ( object ) :
 def barber ( hairTrimTime , fromShopIn , toShopOut ) :
     while True :
         customer = fromShopIn.read ( )
-        assert type ( customer ) == Customer
+        assert isinstance ( customer , Customer )
         print ( 'Barber : Starting Customer ' + str ( customer.id ) )
         time.sleep ( hairTrimTime ( ) )
         print ( 'Barber : Finished Customer ' + str ( customer.id ) )
@@ -40,7 +40,7 @@ def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts , fromShop
             #alt =  Alt ( fromWorld , fromShopOut )
             #customer = alt.select ( )
             customer = fromWorld.read ( )
-            assert type ( customer ) == Customer
+            assert isinstance ( customer , Customer )
             if seatsTaken <= numberOfWaitingSeats :
                 seatsTaken += 1
                 print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( seatsTaken ) + ' in use.' )
@@ -55,7 +55,7 @@ def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts , fromShop
 def shopOut ( fromBarber , toAccounts , toShopIn ) :
     while True :
         customer = fromBarber.read ( )
-        assert type ( customer ) == Customer
+        assert isinstance ( customer , Customer )
         print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
         toAccounts.write ( customer )
         #toShopIn.write ( customer )
@@ -68,7 +68,7 @@ def accounts ( fromShopIn , fromShopOut ) :
         while True :
             alt = Alt ( fromShopIn , fromShopOut )
             customer = alt.select ( )
-            assert type ( customer ) == Customer
+            assert isinstance ( customer , Customer )
             print ( 'XXXX: alt.last_selected = ' + str ( alt.last_selected ) )
             print ( 'XXXX: customer = ' + str ( customer ) )
             print ( 'XXXX: customer.id = ' + str ( customer.id ) )
