@@ -31,14 +31,14 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
         switch ( customer ) {
          case Customer :
            assert customer instanceof Customer
-           println ( "Barber : Starting Customer ${customer.id}." )
+           println "Barber : Starting Customer ${customer.id}."
            Thread.sleep ( hairTrimTime ( ) )
-           println ( "Barber : Finished Customer ${customer.id}." )
+           println "Barber : Finished Customer ${customer.id}."
            shop << new SuccessfulCustomer ( customer )
            ++customersTrimmed
            break
          case 'closing' :
-           println ( "Barber : Work over for the day, trimmed ${customersTrimmed}." )
+           println "Barber : Work over for the day, trimmed ${customersTrimmed} today."
            shop << 'clockedOff'
            terminate ( )
            break
@@ -57,26 +57,26 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
          case Customer :
            if ( seatsTaken <= numberOfWaitingSeats ) {
              ++seatsTaken
-             println ( "Shop : Customer ${customer.id} takes a seat. ${seatsTaken} in use." )
+             println "Shop : Customer ${customer.id} takes a seat. ${seatsTaken} in use."
              barber << customer
            }
            else {
              ++customersTurnedAway
-             println ( "Shop : Customer ${customer.id} turned away." )
+             println "Shop : Customer ${customer.id} turned away."
              world << customer
            }
            break
          case SuccessfulCustomer :
            --seatsTaken
            ++customersTrimmed
-           println ( "Shop : Customer ${customer.customer.id} leaving trimmed." )
+           println "Shop : Customer ${customer.customer.id} leaving trimmed."
            world << customer
            break
          case 'closing' :
            barber << 'closing'
            break
          case 'clockedOff' :
-           println ( "Shop : Closing — ${customersTrimmed} trimmed and ${customersTurnedAway} turned away." )
+           println "Shop : Closing — ${customersTrimmed} trimmed and ${customersTurnedAway} turned away."
            world << 'closed'
            terminate ( )
            break
@@ -88,7 +88,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   world = group.actor {
     def customersTurnedAway = 0
     def customersTrimmed = 0
-    def customerExit = { id -> println ( "World : Customer ${id} exits the shop." ) }
+    def customerExit = { id -> println "World : Customer ${id} exits the shop." }
     loop {
       react { customer ->
         int id
@@ -102,7 +102,7 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
            customerExit ( customer.customer.id )
            break
          case 'closed' :
-           println ( "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today." )
+           println "\nTrimmed ${customersTrimmed} and turned away ${customersTurnedAway} today."
            terminate ( )
          default : throw new RuntimeException ( "World got a message of unexpected type ${customer.class}" )
         }
@@ -111,9 +111,10 @@ def runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats
   }
   for ( number in  0 ..< numberOfCustomers ) {
     Thread.sleep ( nextCustomerWaitTime ( ) )
-    println ( "World : Customer ${number} enters the shop." )
+    println "World : Customer ${number} enters the shop."
     shop << new Customer ( number )
   }
+  println 'World: No more customers, closing time.'
   shop << 'closing'
   //  Wait for the end of the world.  Note that even if Sweeney Todd is the barber and we do not have
   //  conservation of live customers, we may well see closing of the shop and termination of the world.
