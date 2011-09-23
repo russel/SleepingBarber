@@ -72,7 +72,7 @@ def shop ( numberOfWaitingSeats , fromWorld , toBarber , fromBarber , toWorld ) 
                 raise ValueError ( 'Shop : AltSelect failed.' )
             if len ( seats ) > 0 :
                 channel , message = AltSelect ( OutputGuard ( toBarber , msg = seats[0] ) , TimeoutGuard ( seconds = 0.1 ) )
-                if channel == toBarber : seats = seats[1:]
+                if channel == toBarber : del ( seats[0] )
             else :
                 if closing :
                     poison ( toBarber )
