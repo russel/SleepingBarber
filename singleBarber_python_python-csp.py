@@ -21,91 +21,100 @@ class Customer ( object ) :
     def __init__ ( self , id ) :
         self.id = id
 
-@process
-def barber ( hairTrimTime , fromShopIn , toShopOut ) :
-    while True :
-        customer = fromShopIn.read ( )
-        assert isinstance ( customer , Customer )
-        print ( 'Barber : Starting Customer ' + str ( customer.id ) )
-        time.sleep ( hairTrimTime ( ) )
-        print ( 'Barber : Finished Customer ' + str ( customer.id ) )
-        toShopOut.write ( customer )
+class SuccessfulCustomer ( object ) :
+    def __init__ ( self , customer ) :
+        self.c = customer
 
 @process
-def shopIn ( numberOfWaitingSeats , fromWorld , toBarber , toAccounts , fromShopOut ) :
-    seatsTaken = 0
+def barber ( hairTrimTime , fromShop , toShop ) :
+    customersTrimmed = 0
     try :
         while True :
-            print ( 'XXXX: Awaiting a customer . . .' )
-            #alt =  Alt ( fromWorld , fromShopOut )
-            #customer = alt.select ( )
-            customer = fromWorld.read ( )
+            customer = fromShop.read ( )
             assert isinstance ( customer , Customer )
-            if seatsTaken <= numberOfWaitingSeats :
-                seatsTaken += 1
-                print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( seatsTaken ) + ' in use.' )
-                toBarber.write ( customer )
-            else :
-                print ( 'Shop : Customer ' + str ( customer.id ) + ' turned away.' )
-                toAccounts.write ( customer )
+            print ( 'Barber : Starting Customer ' + str ( customer.id ) )
+            time.sleep ( hairTrimTime ( ) )
+            customersTrimmed += 1
+            print ( 'Barber : Finished Customer ' + str ( customer.id ) )
+            toShop.write ( SuccessfulCustomer ( customer ) )
     except ChannelPoison :
-        toAccounts.poison ( )
+        print ( 'Barber : Finished work for the day, trimmed ' + str ( customersTrimmed ) )
 
 @process
-def shopOut ( fromBarber , toAccounts , toShopIn ) :
+def shop ( numberOfWaitingSeats , fromWorld , toBarber , fromBarber , toWorld ) :
+    seats = [ ]
+    customersTrimmed = 0
+    customersTurnedAway = 0
+    alt =  Alt ( fromBarber , fromWorld )
+    closing = False
     while True :
-        customer = fromBarber.read ( )
-        assert isinstance ( customer , Customer )
-        print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
-        toAccounts.write ( customer )
-        #toShopIn.write ( customer )
+        try :
+            customer = alt.select ( )
+            if isinstance ( customer , Customer ) :
+                if len ( seats ) <= numberOfWaitingSeats :
+                    seats.append ( customer )
+                    print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( len ( seats ) ) + ' in use.' )
+                    toBarber.write ( customer )
+                else :
+                    customersTurnedAway += 1
+                    print ( 'Shop : Customer ' + str ( customer.id ) + ' turned away.' )
+                    toWorld.write ( customer )
+            elif isinstance ( customer , SuccessfulCustomer ) :
+                seatsTaken -= 1
+                customersTrimmed += 1
+                print ( 'Shop : Customer ' + str ( customer.c.id ) + ' leaving trimmed.' )
+                toWorld.write ( customer )
+            else :
+                raise ValueError ( 'Shop : select failed, got a ' + str ( customer ) )
+            if len ( seats ) > 0 :
+                toBarber.write ( seats[0] )
+                del ( seats[0] )
+            else :
+                if closing :
+                    toBarber.poison ( )
+                    print ( 'Shop : Closing -- ' + str ( customersTrimmed ) + ' trimmed, and ' + str ( customersTurnedAway ) + ' turned away.' )
+                    toWorld.poison ( )
+                    break
+        except ChannelPoison :
+            closing = True
 
 @process
-def accounts ( fromShopIn , fromShopOut ) :
+def worldSink ( fromShop ) :
     customersTurnedAway = 0
     customersTrimmed = 0
     try :
         while True :
-            alt = Alt ( fromShopIn , fromShopOut )
-            customer = alt.select ( )
-            assert isinstance ( customer , Customer )
-            print ( 'XXXX: alt.last_selected = ' + str ( alt.last_selected ) )
-            print ( 'XXXX: customer = ' + str ( customer ) )
-            print ( 'XXXX: customer.id = ' + str ( customer.id ) )
-            if alt.last_selected == fromShopIn :
+            customer = fromShop.read ( )
+            if isinstance ( customer , Customer ) :
                 customersTurnedAway += 1
-            elif alt.last_selected == fromShopOut :
+                print ( 'World : Customer ' + str ( customer.id ) + ' exiting the shop, turned away.' )
+            elif isinstance ( customer , SuccessfulCustomer ) :
                 customersTrimmed += 1
+                print ( 'World : Customer ' + str ( customer.c.id ) + ' exiting the shop, trimmed.' )
             else :
                 raise ValueError ( 'Incorrect return from Alt.' )
-            print ( 'XXXX: customersTurnedAway = ' + str ( customersTurnedAway ) )
-            print ( 'XXXX: customersTrimmed = ' + str ( customersTrimmed ) )
     except ChannelPoison :
         print ( '\nTrimmed ' + str ( customersTrimmed ) + ' and turned away ' + str ( customersTurnedAway ) + ' today.' )
-        print ( 'Find a sensible way of terminating all the processes.' )
 
 @process
-def world ( numberOfCustomers , nextCustomerWaitTime , toShopIn ) :
+def worldSource ( numberOfCustomers , nextCustomerWaitTime , toShop ) :
     for i in range ( numberOfCustomers ) :
         time.sleep ( nextCustomerWaitTime ( ) )
         print ( 'World : Customer ' + str ( i ) + ' enters the shop.' )
-        toShopIn.write ( Customer ( i ) )
-    toShopIn.poison ( )
+        toShop.write ( Customer ( i ) )
+    toShop.poison ( )
 
-def main ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
-    worldToShopIn = Channel ( )
-    shopOutToShopIn = Channel ( )
-    toBarber = Channel ( )
-    toShopOut = Channel ( )
-    shopInToAccounts = Channel ( )
-    shopOutToAccounts = Channel ( )
+def runSimulation ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
+    worldToShop = Channel ( )
+    shopToBarber = Channel ( )
+    barberToShop = Channel ( )
+    shopToWorld = Channel ( )
     Par (
-        barber ( hairTrimTime , toBarber , toShopOut ) ,
-        shopIn ( numberOfWaitingSeats , worldToShopIn , toBarber , shopInToAccounts , shopOutToShopIn ) ,
-        shopOut ( toShopOut , shopOutToAccounts , shopOutToShopIn ) ,
-        accounts ( shopInToAccounts , shopOutToAccounts ) ,
-        world ( numberOfCustomers , nextCustomerWaitTime , worldToShopIn ) ,
+        barber ( hairTrimTime , shopToBarber , barberToShop ) ,
+        shop ( numberOfWaitingSeats , worldToShop , shopToBarber , barberToShop , shopToWorld ) ,
+        worldSink ( shopToWorld ) ,
+        worldSource ( numberOfCustomers , nextCustomerWaitTime , worldToShop ) ,
         ).start ( )
     
 if __name__ == '__main__' :
-    main ( 20 ,  4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.006 + 0.001 )
+    runSimulation ( 20 ,  4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.006 + 0.001 )
