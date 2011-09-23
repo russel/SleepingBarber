@@ -21,68 +21,106 @@ class Customer ( object ) :
 
 class SuccessfulCustomer ( object ) :
     def __init__ ( self , customer ) :
-        self.customer = customer
+        self.c = customer
+
+_closing = 'closing'
+_clockedOff = 'clockedOff'
+_closed = 'closed'
 
 class Barber ( multiprocessing.Process ) :
-    def __init__ ( self , shop , hairTrimTime ) :
+    def __init__ ( self , hairTrimTime ) :
         super ( Barber , self ).__init__ ( )
         self.queue = multiprocessing.Queue ( )
-        self.shop = shop
+        self.shop = None
         self.hairTrimTime = hairTrimTime
-        self.start ( )
     def run ( self ) :
+        customersTrimmed = 0
         while True :
             customer = self.queue.get ( )
-            assert isinstance ( customer , Customer )
-            print ( 'Barber : Starting Customer ' + str ( customer.id ) )
-            time.sleep ( self.hairTrimTime ( ) )
-            print ( 'Barber : Finished Customer ' + str ( customer.id ) )
-            self.shop.queue.put ( SuccessfulCustomer ( customer ) )
+            if isinstance ( customer , Customer ) :
+                print ( 'Barber : Starting Customer ' + str ( customer.id ) )
+                time.sleep ( self.hairTrimTime ( ) )
+                customersTrimmed += 1
+                print ( 'Barber : Finished Customer ' + str ( customer.id ) )
+                self.shop.queue.put ( SuccessfulCustomer ( customer ) )
+            elif isinstance ( customer , str ) and customer == _closing :
+                print ( 'Barber : Clocking off, trimmed ' + str ( customersTrimmed ) + 'today.' )
+                self.shop.queue.put ( _clockedOff )
+                break
+            else : raise ValueError ( 'Barber : Unexpected object received:' + str ( customer ) + ' / ' + str ( type ( customer ) ) )
 
 class Shop ( multiprocessing.Process ) :
-    def __init__ ( self , numberOfWaitingSeats , hairTrimTime ) :
+    def __init__ ( self , numberOfWaitingSeats , barber , world ) :
         super ( Shop , self ).__init__ ( )
         self.numberOfWaitingSeats = numberOfWaitingSeats
+        self.barber = barber
+        self.world = world
         self.queue = multiprocessing.Queue ( )
-        self.seatsTaken = 0
-        self.customersTrimmed = 0
-        self.customersTurnedAway = 0
-        self.isOpen = True
-        self.barber = Barber ( self , hairTrimTime )
-        self.start ( )
     def run ( self ) :
+        seatsTaken = 0
+        customersTrimmed = 0
+        customersTurnedAway = 0
         while True :
-            event = self.queue.get ( )
-            if isinstance ( event , Customer ) :
-                if self.seatsTaken < self.numberOfWaitingSeats :
-                    self.seatsTaken += 1
-                    print ( 'Shop : Customer ' + str ( event.id ) + ' takes a seat. ' + str ( self.seatsTaken ) + ' in use.' )
-                    self.barber.queue.put ( event )
+            customer = self.queue.get ( )
+            if isinstance ( customer , Customer ) :
+                if seatsTaken < self.numberOfWaitingSeats :
+                    seatsTaken += 1
+                    print ( 'Shop : Customer ' + str ( customer.id ) + ' takes a seat. ' + str ( seatsTaken ) + ' in use.' )
+                    self.barber.queue.put ( customer )
                 else :
-                    self.customersTurnedAway += 1
-                    print ( 'Shop : Customer ' + str ( event.id ) +' turned away.' )
-            elif isinstance ( event , SuccessfulCustomer ) :
-                customer = event.customer
-                assert isinstance ( customer , Customer )
-                self.seatsTaken -= 1
-                self.customersTrimmed += 1
-                print ( 'Shop : Customer ' + str ( customer.id ) + ' leaving trimmed.' )
-                if ( not self.isOpen ) and ( self.seatsTaken == 0 ) :
-                    print ( '\nTrimmed ' + str ( self.customersTrimmed ) + ' and turned away ' + str ( self.customersTurnedAway ) + ' today.' )
-                    self.barber.terminate ( )
-                    return
-            elif isinstance ( event , str ) : self.isOpen = False
-            else : raise ValueError ( 'Object of unexpected type received.' )
+                    customersTurnedAway += 1
+                    print ( 'Shop : Customer ' + str ( customer.id ) +' turned away.' )
+                    self.world.queue.put ( customer )
+            elif isinstance ( customer , SuccessfulCustomer ) :
+                assert isinstance ( customer.c , Customer )
+                seatsTaken -= 1
+                customersTrimmed += 1
+                print ( 'Shop : Customer ' + str ( customer.c.id ) + ' leaving trimmed.' )
+                self.world.queue.put ( customer )
+            elif isinstance ( customer , str ) and customer == _closing :
+                self.barber.queue.put ( customer )
+            elif isinstance ( customer , str ) and customer == _clockedOff :
+                print ( 'Shop : Closing --- ' + str ( customersTrimmed ) + ' trimmed and ' + str ( customersTurnedAway ) + ' turned away.' )
+                self.world.queue.put ( _closed )
+                break
+            else : raise ValueError ( 'Shop : Unexpected object received:' + str ( customer ) + ' / ' + str ( type ( customer ) ) )
 
-def world ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
-    shop = Shop ( numberOfWaitingSeats , hairTrimTime )
+class World ( multiprocessing.Process ) :
+    def __init__ ( self ) :
+        super ( World , self ).__init__ ( )
+        self.queue = multiprocessing.Queue ( )
+    def run ( self ) :
+        customersTrimmed = 0
+        customersTurnedAway = 0
+        while True :
+            customer = self.queue.get ( )
+            if isinstance ( customer , Customer ) :
+                customersTurnedAway += 1
+                print ( 'World : Customer ' + str ( customer.id ) + 'exiting the shop, turned away.' )
+            elif isinstance ( customer , SuccessfulCustomer ) :
+                customersTrimmed += 1
+                print ( 'World : Customer ' + str ( customer.c.id ) + ' exiting the shop, trimmed.' )
+            elif isinstance ( customer , str ) and customer == _closed :
+                print ( '\nTrimmed ' + str ( customersTrimmed ) + ' and turned away ' + str ( customersTurnedAway ) + ' today.' )
+                break
+            else : raise ValueError ( 'World : Unexpected object received:' + str ( customer ) + ' / ' + str ( type ( customer ) ) )
+                
+def runSimulation ( numberOfCustomers , numberOfWaitingSeats , nextCustomerWaitTime , hairTrimTime ) :
+    barber = Barber ( hairTrimTime )
+    world = World ( )
+    shop = Shop ( numberOfWaitingSeats , barber , world )
+    barber.shop = shop
+    barber.start ( )
+    world.start ( )
+    shop.start ( )
     #  In Python 2 would use xrange here but use range for Python 3 compatibility.
     for i in range ( numberOfCustomers ) :
         time.sleep ( nextCustomerWaitTime ( ) )
         print ( 'World : Customer ' + str ( i ) + ' enters the shop.' )
         shop.queue.put ( Customer ( i ) )
-    shop.queue.put ( '' )
-    shop.join ( )
+    shop.queue.put ( _closing )
+    #  Wait for the world to end.
+    world.join ( )
 
 if __name__ == '__main__' :
-    world ( 20 ,  4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.006 + 0.001 )
+    runSimulation ( 20 ,  4 , lambda : random.random ( ) * 0.002 + 0.001 , lambda : random.random ( ) * 0.006 + 0.001 )
