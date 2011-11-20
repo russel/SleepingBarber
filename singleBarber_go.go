@@ -1,7 +1,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Go (http://go-lang.org),
  //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010 Russel Winder
+//  Copyright © 2010–2011 Russel Winder
 
 //  Go does not support Actors or active objects, its concurrency model is effectively that of CSP:
 //  processes with synchronous message passing.
@@ -10,7 +10,7 @@ package main
 
 import (
 	"fmt"
-	"rand"
+	"math/rand"
 	"time"
 )
 
