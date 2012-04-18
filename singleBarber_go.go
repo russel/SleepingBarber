@@ -1,10 +1,15 @@
 //  This is a model of the "The Sleeping Barber" problem using Go (http://go-lang.org),
  //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010–2011 Russel Winder
+//  Copyright © 2010–2012 Russel Winder
 
-//  Go does not support Actors or active objects, its concurrency model is effectively that of CSP:
-//  processes with synchronous message passing.
+//  Go's concurrency/parallelism model is (effectively) that of CSP: sequential processes (goroutines)
+//  sending synchronous messages to each other on channels.  Go allows for buffered channels in which case
+//  message passing is asynchronous -- sort of, there is blocking if a send is made to a full chennel. Thus
+//  goroutines can be made to work like actors if so desired.
+//
+//  This implementation of the solution uses synchronous messaging throughout even with the use of a
+//  buffered channel to represent the waiting seats in the shop.
 
 package main
 
@@ -16,7 +21,7 @@ import (
 
 type Customer struct { id int ; successful bool }
 
-func barber ( hairTrimTime func ( ) int64 , fromShopChannel , toShopChannel chan *Customer ) {
+func barber ( hairTrimTime func ( ) time.Duration , fromShopChannel <-chan *Customer , toShopChannel chan<- *Customer ) {
 	customersTrimmed := 0
 	for working := true ; working ; {
 		customer := <- fromShopChannel
@@ -34,7 +39,10 @@ func barber ( hairTrimTime func ( ) int64 , fromShopChannel , toShopChannel chan
 	}
 }
 
-func shop ( numberOfSeats int , fromWorldChannel , toBarberChannel , fromBarberChannel , toWorldChannel chan *Customer ) {
+func shop ( numberOfSeats int , fromWorldChannel <-chan *Customer , toBarberChannel chan<- *Customer ,
+	fromBarberChannel <-chan *Customer , toWorldChannel chan<- *Customer ) {
+	//  Have to manually track the number of people waiting so that there is always a space fo rthe
+	//  "closing" Customer object.
 	seatsFilled := 0
 	customersTurnedAway := 0
 	customersTrimmed := 0
@@ -45,6 +53,7 @@ func shop ( numberOfSeats int , fromWorldChannel , toBarberChannel , fromBarberC
 			if customer.id == -1 {
 				toBarberChannel <- customer
 			} else {
+				// Sends always blocks so pre-calculate the state of the channel.
 				if seatsFilled <= numberOfSeats {
 					seatsFilled++
 					fmt.Printf ( "Shop : Customer %d takes a seat. %d in use.\n" , customer.id , seatsFilled )
@@ -69,7 +78,7 @@ func shop ( numberOfSeats int , fromWorldChannel , toBarberChannel , fromBarberC
 	}
 }
 
-func world ( fromShopChannel , terminationChannel chan *Customer ) {
+func world ( fromShopChannel <-chan *Customer , terminationChannel chan<- *Customer ) {
 	customersTurnedAway := 0
 	customersTrimmed := 0
 	for exists := true ; exists ; {
@@ -89,9 +98,11 @@ func world ( fromShopChannel , terminationChannel chan *Customer ) {
 	}
 }
 
-func runSimulation ( numberOfCustomers , numberOfSeats int , nextCustomerWaitTime , hairTrimTime func ( ) int64 ) {
+func runSimulation ( numberOfCustomers , numberOfSeats int , nextCustomerWaitTime , hairTrimTime func ( ) time.Duration ) {
 	worldToShopChannel := make ( chan *Customer )
 	shopToWorldChannel := make ( chan *Customer )
+	//  Must ensure that the "closing" customer can be added to the waiting seats no matter what the
+	//  state is.
 	shopToBarberChannel := make ( chan *Customer , numberOfSeats + 1 )
 	barberToShopChannel := make ( chan *Customer )
 	terminationChannel := make ( chan *Customer ) 
@@ -109,7 +120,7 @@ func runSimulation ( numberOfCustomers , numberOfSeats int , nextCustomerWaitTim
 
 func main ( ) {
 	runSimulation ( 20 , 4 ,
-		func ( ) int64 { return int64 ( rand.Float64 ( )  * 200000 ) + 100000 } ,
-		func ( ) int64 { return int64 ( rand.Float64 ( )  * 600000 ) + 100000 } ,
+		func ( ) time.Duration { return time.Duration ( ( rand.Float64 ( )  * 2 ) + 1 ) * time.Millisecond } ,
+		func ( ) time.Duration { return time.Duration ( ( rand.Float64 ( )  * 6 ) + 1 ) * time.Millisecond } ,
 	)
 }
