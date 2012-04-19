@@ -1,11 +1,12 @@
 //  This is a model of the "The Sleeping Barber" problem using D (http://d-programming-language.org/),
  //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010–2011 Russel Winder
+//  Copyright © 2010–2012 Russel Winder
 
-//  D implements Actor Model when creating spawned processes, i.e. each process has a single message queue
-//  on which receive or receiveOnly can be called. Customers are passed as message between the processes.
-//  However as each process has only a single message queue we have to realize case classes.
+//  D implements actors when creating spawned processes, i.e. each process has a single message queue on
+//  which receive or receiveOnly can be called. Here, Customers are passed as message between the processes.
+//  However as each process has only a single message queue we have to realize case classes so as to know
+//  which Customer came from where.
 
 //  The barber sleeping is modeled by the barber actor using a blocking read on its message queue.  The
 //  barber seats are modeled by the barber actor message queue so the shop actor is responsible for tracking
@@ -19,13 +20,15 @@ import std.stdio ;
 
 import core.thread ;
 
-//  There must be a way of making these value types using immutable without creating an Error -11 at run
-//  time.
+//  With the 2.057 -> 2.058 change it became necessary to put a variable name in the parameter list of the
+//  closures that are the parameters of receive call.
 
-struct Customer { int id ; }
-struct SuccessfulCustomer { Customer customer ; }
-struct ShopClosing { }
-struct ClockedOut { }
+//  There must be a way of making these value types using immutable and have the sends work.
+
+/*immutable*/ struct Customer { int id ; }
+/*immutable*/ struct SuccessfulCustomer { Customer customer ; }
+immutable struct ShopClosing { }
+immutable struct ClockedOut { }
 
 void barber ( immutable ( int ) function ( ) hairTrimTime , Tid shop ) {
   auto customersTrimmed = 0 ;
@@ -38,42 +41,44 @@ void barber ( immutable ( int ) function ( ) hairTrimTime , Tid shop ) {
                ++customersTrimmed ;
                shop.send ( SuccessfulCustomer ( customer ) ) ;
              } ,
-             ( ShopClosing ) {
+             ( ShopClosing x ) {
                writeln ( "Barber : Work over for the day, trimmed " , customersTrimmed , "." ) ;
                shop.send ( ClockedOut ( ) ) ;
                running = false ;
              } ,
-             ( OwnerTerminated ) { }
+             ( OwnerTerminated x ) { }
              ) ;
   }
 }
 
 void shop ( immutable ( int ) numberOfSeats , immutable ( int ) function ( ) hairTrimTime , Tid world  ) {
-  auto seatsFilled = 0 ;
   auto customersTrimmed = 0 ;
   auto customersTurnedAway = 0 ;
   auto barber = spawn ( & barber , hairTrimTime , thisTid ) ;
+  setMaxMailboxSize ( barber , numberOfSeats , OnCrowding.throwException ) ;
   for ( auto running = true ; running ; ) {
     receive (
              ( Customer customer ) {
-               if ( seatsFilled < numberOfSeats ) {
-                 ++seatsFilled ;
-                 writeln ( "Shop : Customer " , customer.id , " takes a seat. " , seatsFilled , " in use." ) ;
+               try {
                  barber.send ( customer ) ;
+                 writeln ( "Shop : Customer " , customer.id , " takes a seat. " ) ;
                }
-               else {
+               catch ( MailboxFull mf ) {
                  ++customersTurnedAway ;
                  writeln ( "Shop : Customer " , customer.id , " turned away." ) ;
                  world.send ( customer ) ;
                }
              } ,
              ( SuccessfulCustomer successfulCustomer ) {
-               --seatsFilled ;
                ++customersTrimmed ;
                writeln ( "Shop : Customer " , successfulCustomer.customer.id , " leaving trimmed." ) ;
                world.send ( successfulCustomer ) ;
              } ,
              ( ShopClosing message ) {
+               // It is imperative we can append this metadata to the baber mailbox asynchronously and
+               // without error. To protect against the mailbox already being full we extend it by one.
+               // This has no effect on the algorithm since this is termination time.
+               setMaxMailboxSize ( barber , numberOfSeats + 1 , OnCrowding.block ) ;
                barber.send ( message ) ;
              } ,
              ( ClockedOut message ) {
@@ -81,7 +86,7 @@ void shop ( immutable ( int ) numberOfSeats , immutable ( int ) function ( ) hai
                world.send ( message ) ;
                running = false ;
              } ,
-             ( OwnerTerminated ) { }
+             ( OwnerTerminated x ) { }
              ) ;
   }
 }
@@ -107,8 +112,8 @@ void world ( immutable ( int ) numberOfCustomers ) {
                ++customersTrimmed ;
                message ( successfulCustomer.customer.id ) ;
              } ,
-             ( ClockedOut ) { running = false ; } ,
-             ( OwnerTerminated ) { }
+             ( ClockedOut x ) { running = false ; } ,
+             ( OwnerTerminated x ) { }
              ) ;
   }
   writeln ( "\nTrimmed " , customersTrimmed , " and turned away " , customersTurnedAway , " today." ) ;
@@ -131,6 +136,6 @@ void runSimulation ( immutable ( int ) numberOfCustomers , immutable ( int ) num
 void main ( immutable string[] args ) {
   runSimulation ( 20 , 4 ,
                   function immutable ( int ) ( ) { return uniform ( 0 , 60000 ) + 10000 ; } ,
-                   function immutable ( int ) ( ) { return uniform ( 0 , 20000 ) + 10000 ; }
-                 ) ;
+                  function immutable ( int ) ( ) { return uniform ( 0 , 20000 ) + 10000 ; }
+                  ) ;
 }
