@@ -21,8 +21,8 @@ dEnvironment = Environment (
    )
 for item in Glob ( '*.d' ) :
     name , extension = os.path.splitext ( item.name )
-    #dEnvironment.Command ( 'run_' + name , dEnvironment.Program ( item ) , './$SOURCE' )
-    dEnvironment.Command ( 'run_' + name , dEnvironment.Command ( name , item , 'gdc -O3 -o $TARGET $SOURCE' ) , './$SOURCE' )
+    dEnvironment.Command ( 'run_' + name , dEnvironment.Program ( item ) , './$SOURCE' )
+    #dEnvironment.Command ( 'run_' + name , dEnvironment.Command ( name , item , 'gdc -O3 -o $TARGET $SOURCE' ) , './$SOURCE' )
 
 justThreadPro_home = os.environ['HOME'] + '/lib.Linux.x86_64/JustThreadPro'
 cppEnvironment = Environment (
