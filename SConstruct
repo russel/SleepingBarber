@@ -38,12 +38,11 @@ for item in Glob ( '*.cpp' ) :
     cppEnvironment.Command ( 'run_' + name , cppEnvironment.Program ( item ) , './$SOURCE' ) 
 
 javaEnvironment = Environment ( tools = [ 'javac' ] ,
-                                JAVACFLAGS = [ '-source' , '6' , '-encoding' , 'utf-8' ] ,
-                                JAVACLASSPATH = [ os.environ['HOME'] + '/lib/Java/jsr166y.jar' , os.environ['HOME'] + '/lib/Java/extra166y.jar' ] ,
+                                JAVACFLAGS = [ '-encoding' , 'utf-8' ] ,
                                 )
 for  item in Glob ( '*.java' ) :
     className , extension = os.path.splitext ( item.name )
-    javaEnvironment.Command ( 'run_' + className , javaEnvironment.Java ( '.' , item ) , 'java -cp .:' + ':'.join ( javaEnvironment['JAVACLASSPATH'] ) + ' ' + className ) 
+    javaEnvironment.Command ( 'run_' + className , javaEnvironment.Java ( '.' , item ) , 'java ' + className ) 
 
 
 scalaEnvironment = Environment ( tools = [ ] , ENV = os.environ )
@@ -56,3 +55,10 @@ for item in Glob ( '*.scala' ) :
 #  so they do not get automatically removed on a clean.  So we have to hack it :-(
 
 Clean ( '.' , Glob ( '*.class' ) )
+
+
+goEnvironment = Environment ( tools = [ ] , ENV = os.environ )
+
+for item in Glob ( '*.go' ) :
+    name , extension = os.path.splitext ( item.name )
+    goEnvironment.Command ( 'run_' + name , goEnvironment.Command ( name , item , 'go build $SOURCE' ) , './$SOURCE' ) 
