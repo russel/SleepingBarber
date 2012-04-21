@@ -53,8 +53,7 @@ object SingleBarber_Scala_Actors extends App {
               seatsFilled += 1
               println ( "Shop : Customer " + customer.id + " takes a seat. " + seatsFilled + " in use." )
               barber ! customer
-            }
-            else {
+            } else {
               customersTurnedAway += 1
               println ( "Shop : Customer " + customer.id + " turned away." )
               world ! customer
