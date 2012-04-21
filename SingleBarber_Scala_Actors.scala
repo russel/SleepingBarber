@@ -1,7 +1,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Scala and its primitive actors,
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011 Russel Winder
+//  Copyright © 2011–2012 Russel Winder
 
 //  The barber sleeping is modeled by the barber actor using a blocking read on its message queue.  The
 //  barber seats are modeled by the barber actor message queue so the shop actor is responsible for tracking
