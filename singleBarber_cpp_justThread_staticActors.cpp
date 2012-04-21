@@ -3,7 +3,7 @@
  *  (http://www.stdthread.co.uk/pro/) actor implementation over C++11 threads,
  *  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
  *
- *  Copyright © 2011 Russel Winder
+ *  Copyright © 2011–2012 Russel Winder
  */
 
 #include <iostream>
@@ -14,11 +14,11 @@ const unsigned numberOfCustomers = 20 ;
 const unsigned numberOfWaitingSeats = 4 ;
 
 std::chrono::milliseconds hairTrimTime ( ) {
-  return  std::chrono::milliseconds ( 200 + rand ( ) % 200 ) ;
+  return  std::chrono::milliseconds ( 1 + rand ( ) % 6 ) ;
 }
 
 std::chrono::milliseconds customerDelayTime ( ) {
-  return  std::chrono::milliseconds ( 50 + rand ( ) % 250 ) ;
+  return  std::chrono::milliseconds ( 1 + rand ( ) % 2 ) ;
 }
 
 struct customer {
