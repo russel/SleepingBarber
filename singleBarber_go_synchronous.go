@@ -41,7 +41,7 @@ func barber ( hairTrimTime func ( ) time.Duration , fromShopChannel <-chan *Cust
 
 func shop ( numberOfSeats int , fromWorldChannel <-chan *Customer , toBarberChannel chan<- *Customer ,
 	fromBarberChannel <-chan *Customer , toWorldChannel chan<- *Customer ) {
-	//  Have to manually track the number of people waiting so that there is always a space fo rthe
+	//  Have to manually track the number of people waiting so that there is always a space for the
 	//  "closing" Customer object.
 	seatsFilled := 0
 	customersTurnedAway := 0
