@@ -20,8 +20,8 @@ object SingleBarber_Scala_Actors extends App {
   case object BarberStoppedWork
   def runSimulation ( numberOfCustomers : Int , numberOfWaitingSeats : Int , hairTrimTime : ( ) => Int , nextCustomerWaitingTime : ( ) => Int ) {
     //  Due to the cross-references of the various actor objects, the type inference system cannot resolve
-    //  the types appropriately, and so the types of some of the actors must be specified, so delcare the
-    //  types of all of them.  Moreover, the definitions have to be lazy so as to deal with the order of use
+    //  the types appropriately, and so the types of some of the actors must be specified, so declare the
+    //  types of all of them. Moreover, the definitions have to be lazy so as to deal with the order of use
     //  versus definition.
     lazy val barber : Actor = Actor.actor {
       var customersTrimmed = 0
@@ -75,7 +75,7 @@ object SingleBarber_Scala_Actors extends App {
     }
     lazy val world : Actor = Actor.actor {
       //  We know that the Vogon constructor fleet is coming to destroy the world to make way for an
-      //  interstellar by-pass.
+      //  hyperspace by-pass.
       var notVogoned = true
       var customersTurnedAway = 0
       var customersTrimmed = 0
@@ -107,6 +107,6 @@ object SingleBarber_Scala_Actors extends App {
     shop ! CloseShop
   }
   val r = new Random ( )
-  runSimulation ( 20 , 4 , ( ) => r.nextInt ( 60 ) + 10 , ( ) => r.nextInt ( 20 ) + 10 )
+  runSimulation ( 20 , 4 , ( ) => r.nextInt ( 6 ) + 1 , ( ) => r.nextInt ( 2 ) + 1 )
 }
   
