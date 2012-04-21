@@ -20,9 +20,6 @@ import std.stdio ;
 
 import core.thread ;
 
-//  With the 2.057 -> 2.058 change it became necessary to put a variable name in the parameter list of the
-//  closures that are the parameters of receive call.
-
 //  There must be a way of making these value types using immutable and have the sends work.
 
 /*immutable*/ struct Customer { int id ; }
@@ -30,7 +27,7 @@ import core.thread ;
 immutable struct ShopClosing { }
 immutable struct ClockedOut { }
 
-void barber ( immutable ( int ) function ( ) hairTrimTime , Tid shop ) {
+void barber ( immutable ( Duration ) function ( ) hairTrimTime , Tid shop ) {
   auto customersTrimmed = 0 ;
   for ( auto running = true ; running ; ) {
     receive (
@@ -51,7 +48,7 @@ void barber ( immutable ( int ) function ( ) hairTrimTime , Tid shop ) {
   }
 }
 
-void shop ( immutable ( int ) numberOfSeats , immutable ( int ) function ( ) hairTrimTime , Tid world  ) {
+void shop ( immutable ( int ) numberOfSeats , immutable ( Duration ) function ( ) hairTrimTime , Tid world  ) {
   auto customersTrimmed = 0 ;
   auto customersTurnedAway = 0 ;
   auto barber = spawn ( & barber , hairTrimTime , thisTid ) ;
@@ -120,8 +117,11 @@ void world ( immutable ( int ) numberOfCustomers ) {
 }
 
 
-void runSimulation ( immutable ( int ) numberOfCustomers , immutable ( int ) numberOfSeats ,
-                     immutable ( int ) function ( ) hairTrimTime , immutable ( int ) function ( )  nextCustomerWaitTime ) {
+void runSimulation (
+                    immutable ( int ) numberOfCustomers ,
+                    immutable ( int ) numberOfSeats ,
+                    immutable ( Duration ) function ( ) hairTrimTime ,
+                    immutable ( Duration ) function ( )  nextCustomerWaitTime ) {
   auto world = spawn ( & world , numberOfCustomers ) ;
   auto shop = spawn ( & shop , numberOfSeats , hairTrimTime , world ) ;
   world.send ( shop ) ;
@@ -135,7 +135,7 @@ void runSimulation ( immutable ( int ) numberOfCustomers , immutable ( int ) num
 
 void main ( immutable string[] args ) {
   runSimulation ( 20 , 4 ,
-                  function immutable ( int ) ( ) { return uniform ( 0 , 60000 ) + 10000 ; } ,
-                  function immutable ( int ) ( ) { return uniform ( 0 , 20000 ) + 10000 ; }
+                  function immutable ( Duration ) ( ) { return dur ! ( "msecs" ) ( uniform ( 0 , 6 ) + 1 ) ; } ,
+                  function immutable ( Duration ) ( ) { return dur ! ( "msecs" ) ( uniform ( 0 , 2 ) + 1 ) ; }
                   ) ;
 }
