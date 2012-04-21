@@ -1,7 +1,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Java executor service only,
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011 Russel Winder
+//  Copyright © 2011–2012 Russel Winder
 
 //  Use the default package.
 
@@ -33,10 +33,10 @@ public class SingleBarber_Java_ScheduledThreadPoolExecutor {
                     final RandomCallingFunction hairTrimTime , final RandomCallingFunction nextCustomerWaitTime )
     throws InterruptedException , ExecutionException {
     final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor ( Runtime.getRuntime ( ).availableProcessors ( ) ) ;
-    final ArrayBlockingQueue<Customer> waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats ) ;
-    final ArrayBlockingQueue<Customer> toShop = new ArrayBlockingQueue<Customer> ( numberOfCustomers ) ;
-    final ArrayBlockingQueue<SuccessfulCustomer> fromChair = new ArrayBlockingQueue<SuccessfulCustomer> ( numberOfCustomers ) ;
-    final ArrayBlockingQueue<Object> fromShop = new ArrayBlockingQueue<Object> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<Customer> waitingChairs = new ArrayBlockingQueue<> ( numberOfWaitingSeats ) ;
+    final ArrayBlockingQueue<Customer> toShop = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<SuccessfulCustomer> fromChair = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<Object> fromShop = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
     final Future<Integer> barber = executor.submit ( new Callable<Integer> ( ) {
         @Override public Integer call ( ) {
           int customersTrimmed = 0 ;
@@ -71,12 +71,10 @@ public class SingleBarber_Java_ScheduledThreadPoolExecutor {
               if ( customer.id == -1 ) {
                 try { waitingChairs.put ( customer ) ; }
                 catch ( InterruptedException ie ) { throw new RuntimeException ( ie ) ; }
-              }
-              else {
+              } else {
                 if ( waitingChairs.offer ( customer ) ) {
                   System.out.println ( "Shop : Customer " + customer.id + " takes a seat. " + waitingChairs.size ( ) + " in use." ) ;
-                }
-                else {
+                } else {
                   ++customersTurnedAway ;
                   System.out.println ( "Shop : Customer " + customer.id + " turned away." ) ;
                   try { fromShop.put ( customer ) ; }
@@ -112,12 +110,10 @@ public class SingleBarber_Java_ScheduledThreadPoolExecutor {
       if ( customer instanceof SuccessfulCustomer ) {
         ++customersTrimmed ;
         id = ( (SuccessfulCustomer)customer ).c.id ;
-      }
-      else if ( customer instanceof Customer ) {
+      } else if ( customer instanceof Customer ) {
         ++customersTurnedAway ;
         id = ( (Customer)customer ).id ;
-      }
-      else { throw new RuntimeException ( "Non customer exited the shop." ) ; }
+      } else { throw new RuntimeException ( "Non customer exited the shop." ) ; }
       System.out.println ( "World : Customer " + id + " exits the shop." ) ;
     }
     //  If we don't get here then Sweeney Todd is the barber — we have not got as many live customers back
@@ -132,7 +128,7 @@ public class SingleBarber_Java_ScheduledThreadPoolExecutor {
    }
   public static void main ( final String[] args ) throws InterruptedException , ExecutionException {
     ( new SingleBarber_Java_ScheduledThreadPoolExecutor ( ) ).runSimulation ( 20 , 4 ,
-                                                                             new RandomCallingFunction ( 60 , 10 ) ,
-                                                                             new RandomCallingFunction ( 20 , 10 ) ) ;
+                                                                             new RandomCallingFunction ( 6 , 1 ) ,
+                                                                             new RandomCallingFunction ( 2 , 1 ) ) ;
   }
 }

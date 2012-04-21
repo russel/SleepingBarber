@@ -1,7 +1,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Java threads only,
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011 Russel Winder
+//  Copyright © 2011–2012 Russel Winder
 
 //  Use the default package.
 
@@ -79,8 +79,7 @@ public class SingleBarber_Java_Threads {
         if ( customer != null ) {
           if ( waitingChairs.offer ( customer ) ) {
             System.out.println ( "Shop : Customer " + customer.id + " takes a seat. " + waitingChairs.size ( ) + " in use." ) ;
-          }
-          else {
+          } else {
             ++customersTurnedAway ;
             System.out.println ( "Shop : Customer " + customer.id + " turned away." ) ;
             try { fromShop.put ( customer ) ; }
@@ -114,8 +113,7 @@ public class SingleBarber_Java_Threads {
           if ( customer instanceof Customer ) {
             ++customersTurnedAway ;
             message ( ( (Customer) customer ).id ) ;
-          }
-          else if ( customer instanceof SuccessfulCustomer ) {
+          } else if ( customer instanceof SuccessfulCustomer ) {
             ++customersTrimmed ;
             message ( ( (SuccessfulCustomer) customer ).customer.id ) ;
           }
@@ -129,10 +127,10 @@ public class SingleBarber_Java_Threads {
   private void runSimulation ( final int numberOfCustomers , final int numberOfWaitingSeats ,
                     final RandomCallingFunction hairTrimTime , final RandomCallingFunction nextCustomerWaitTime )
     throws InterruptedException {
-    waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats ) ;
-    toShop = new ArrayBlockingQueue<Customer> ( numberOfCustomers ) ;
-    fromChair = new ArrayBlockingQueue<SuccessfulCustomer> ( numberOfCustomers ) ;
-    fromShop = new ArrayBlockingQueue<Object> ( numberOfCustomers ) ;
+    waitingChairs = new ArrayBlockingQueue<> ( numberOfWaitingSeats ) ;
+    toShop = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
+    fromChair = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
+    fromShop = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
     final Barber barber = new Barber ( hairTrimTime ) ;
     final Shop shop = new Shop ( ) ;
     final Thread shopThread = new Thread ( shop ) ;
@@ -154,7 +152,7 @@ public class SingleBarber_Java_Threads {
   }
   public static void main ( final String[] args ) throws InterruptedException {
     ( new SingleBarber_Java_Threads ( ) ).runSimulation ( 20 , 4 ,
-                                                          new RandomCallingFunction ( 60 , 10 ) ,
-                                                          new RandomCallingFunction ( 20 , 10 ) ) ;
+                                                          new RandomCallingFunction ( 6 , 1 ) ,
+                                                          new RandomCallingFunction ( 2 , 1 ) ) ;
   }
 }

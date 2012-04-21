@@ -1,7 +1,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Java,
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011 Russel Winder
+//  Copyright © 2011–2012 Russel Winder
 //
 //  This solution follow the psuedocode of the solution set out on the Wikipedia page.  Use
 //  java.util.concurrent.Semaphore as an implementation of semaphore to save having to write one or use the
@@ -62,7 +62,7 @@ class SingleBarber_Java_Threads_Wikipedia {
     final Barber barber = new Barber ( hairTrimTime ) ;
     final Thread barberThread = new Thread ( barber ) ;
     barberThread.start ( ) ;
-    final ArrayList<Thread> customerThreads = new ArrayList<Thread> ( ) ;
+    final ArrayList<Thread> customerThreads = new ArrayList<> ( ) ;
     for ( int i = 0 ; i < numberOfCustomers ; ++i ) {
       final int number = i ;
       System.out.println ( "World : Customer " + number + " enters the shop." ) ;
@@ -83,8 +83,7 @@ class SingleBarber_Java_Threads_Wikipedia {
               }
               System.out.println ( "Shop : Customer " + number + " leaving trimmed." ) ;
               ++customersTrimmed ;
-            }
-            else {
+            } else {
               accessSeatsSemaphore.release ( ) ;
               System.out.println ( "Shop : Customer " + number + " turned away." ) ;
               ++customersTurnedAway ;
@@ -107,8 +106,8 @@ class SingleBarber_Java_Threads_Wikipedia {
   }
   public static void main ( final String[] args ) {
     ( new SingleBarber_Java_Threads_Wikipedia ( ) ). runSimulation ( 20 , 4 ,
-                                                          new RandomCallingFunction ( 60 , 10 ) ,
-                                                          new RandomCallingFunction ( 20 , 10 ) ) ;
+                                                          new RandomCallingFunction ( 6 , 1 ) ,
+                                                          new RandomCallingFunction ( 2 , 1 ) ) ;
   }
 }
 

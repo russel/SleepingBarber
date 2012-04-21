@@ -1,16 +1,15 @@
 //  This is a model of the "The Sleeping Barber" problem using Java only, but with all the JSR166y on Java 6
 //  so as to emulate the possibilities of Java 7, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011 Russel Winder
+//  Copyright © 2011–2012 Russel Winder
 
 //  Use the default package.
 
 import java.util.concurrent.ArrayBlockingQueue ;
 import java.util.concurrent.Callable ;
 import java.util.concurrent.ExecutionException ;
-
-import jsr166y.ForkJoinPool ;
-import jsr166y.ForkJoinTask ;
+import java.util.concurrent.ForkJoinPool ;
+import java.util.concurrent.ForkJoinTask ;
 
 public class SingleBarber_Java_ForkJoin {
   private final static class Customer {
@@ -34,10 +33,10 @@ public class SingleBarber_Java_ForkJoin {
                     final RandomCallingFunction hairTrimTime , final RandomCallingFunction nextCustomerWaitTime )
     throws InterruptedException {
     final ForkJoinPool pool = new ForkJoinPool ( ) ;
-    final ArrayBlockingQueue<Customer> waitingChairs = new ArrayBlockingQueue<Customer> ( numberOfWaitingSeats ) ;
-    final ArrayBlockingQueue<Customer> toShop = new ArrayBlockingQueue<Customer> ( numberOfCustomers ) ;
-    final ArrayBlockingQueue<SuccessfulCustomer> fromChair = new ArrayBlockingQueue<SuccessfulCustomer> ( numberOfCustomers ) ;
-    final ArrayBlockingQueue<Object> fromShop = new ArrayBlockingQueue<Object> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<Customer> waitingChairs = new ArrayBlockingQueue<> ( numberOfWaitingSeats ) ;
+    final ArrayBlockingQueue<Customer> toShop = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<SuccessfulCustomer> fromChair = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
+    final ArrayBlockingQueue<Object> fromShop = new ArrayBlockingQueue<> ( numberOfCustomers ) ;
     final ForkJoinTask<Integer> barber = pool.submit ( new Callable<Integer> ( ) {
         @Override public Integer call ( ) {
           int customersTrimmed = 0 ;
@@ -72,12 +71,10 @@ public class SingleBarber_Java_ForkJoin {
               if ( customer.id == -1 ) {
                 try { waitingChairs.put ( customer ) ; }
                 catch ( InterruptedException ie ) { throw new RuntimeException ( ie ) ; }
-              }
-              else {
+              } else {
                 if ( waitingChairs.offer ( customer ) ) {
                   System.out.println ( "Shop : Customer " + customer.id + " takes a seat. " + waitingChairs.size ( ) + " in use." ) ;
-                }
-                else {
+                } else {
                   ++customersTurnedAway ;
                   System.out.println ( "Shop : Customer " + customer.id + " turned away." ) ;
                   try { fromShop.put ( customer ) ; }
@@ -113,8 +110,7 @@ public class SingleBarber_Java_ForkJoin {
       if ( customer instanceof SuccessfulCustomer ) {
         ++customersTrimmed ;
         id = ( (SuccessfulCustomer)customer ).c.id ;
-      }
-      else if ( customer instanceof Customer ) {
+      } else if ( customer instanceof Customer ) {
         ++customersTurnedAway ;
         id = ( (Customer)customer ).id ;
       }
@@ -133,8 +129,8 @@ public class SingleBarber_Java_ForkJoin {
    }
   public static void main ( final String[] args ) throws InterruptedException {
     ( new SingleBarber_Java_ForkJoin ( ) ).runSimulation ( 20 , 4 ,
-                                                           new RandomCallingFunction ( 60 , 10 ) ,
-                                                           new RandomCallingFunction ( 20 , 10 ) ) ;
+                                                           new RandomCallingFunction ( 6 , 1 ) ,
+                                                           new RandomCallingFunction ( 2 , 1 ) ) ;
   }
 }
 
