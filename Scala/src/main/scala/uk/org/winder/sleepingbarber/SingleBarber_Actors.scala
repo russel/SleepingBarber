@@ -15,7 +15,7 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.util.Random
 
-object SingleBarber_Scala_Actors extends App {
+object SingleBarber_Actors extends App {
   case class Customer(id:Int)
   case class SuccessfulCustomer(customer:Customer)
   case object CloseShop

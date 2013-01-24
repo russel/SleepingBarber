@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+sourceCompatibility = 8
+
+defaultTasks 'classes'
+
+new File("${projectDir}/src/main/java/uk/org/winder/sleepingbarber").eachFileMatch(~/SingleBarber_.*\.java/) { filename ->
+    final root = filename.name.replaceFirst(/\.java$/, '')
+    final className = 'uk.org.winder.sleepingbarber.' + root
+    task ('run_' + root, dependsOn: 'classes') << {
+        final process = ("java -cp build/classes/main ${className}").execute()
+        process.in.eachLine{line -> println line}
+        assert process.waitFor() == 0
+    }
+}
