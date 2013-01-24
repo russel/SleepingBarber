@@ -1,13 +1,15 @@
 //  This is a model of the "The Sleeping Barber" problem using Scala and its primitive actors,
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011–2012 Russel Winder
+//  Copyright © 2011–2013 Russel Winder
 
 //  The barber sleeping is modeled by the barber actor using a blocking read on its message queue.  The
 //  barber seats are modeled by the barber actor message queue so the shop actor is responsible for tracking
 //  the number of customers sent to the barber actor.  The world actor only captures customers leaving the
 //  shop, customers are fed into the shop by the main thread, which then waits for the actors to do their
 //  work.
+
+package uk.irg.winder.sleepingbarber
 
 import scala.actors.Actor
 import scala.actors.Actor._
@@ -106,5 +108,5 @@ object SingleBarber_Scala_Actors extends App {
     shop ! CloseShop
   }
   val r = new Random()
-  runSimulation(20 , 4 ,() => r.nextInt(6) + 1 ,() => r.nextInt(2) + 1)
+  runSimulation(20, 4, () => r.nextInt(6) + 1, () => r.nextInt(2) + 1)
 }
