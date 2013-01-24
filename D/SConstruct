@@ -17,5 +17,5 @@ dEnvironment = {
                        }['ldc']
 
 for item in Glob('*.d'):
-    name , extension = os.path.splitext(item.name)
+    name, extension = os.path.splitext(item.name)
     dEnvironment.Command('run_' + name, dEnvironment.Program(item), './$SOURCE')
