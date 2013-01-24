@@ -1,0 +1,21 @@
+# -*- mode:python; coding:utf-8; -*-
+
+import os
+
+dEnvironment = {
+    'dmd': Environment(tools=['link', 'dmd'], # Why is the order crucial here?
+                       DFLAGS=['-O', '-release'],
+                       #DC='gdmd'
+                       ),
+    'gdc':  Environment(tools=['link', 'gdc'], # Why is the order crucial here?
+                        DFLAGS=['-O3'],
+                        ),
+    'ldc': Environment(tools=['link', 'ldc'],
+                       ENV = os.environ,
+                       DFLAGS=['-O', '-release'],
+                       ),
+                       }['ldc']
+
+for item in Glob('*.d'):
+    name , extension = os.path.splitext(item.name)
+    dEnvironment.Command('run_' + name, dEnvironment.Program(item), './$SOURCE')
