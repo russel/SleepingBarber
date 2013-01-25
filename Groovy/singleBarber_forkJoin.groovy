@@ -3,7 +3,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Groovy (http://groovy.codehaus.org) with the
 //  JSR166y stuff and Java 6 to emulate Java 7, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2011–2012 Russel Winder
+//  Copyright © 2011–2013  Russel Winder
 
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Callable

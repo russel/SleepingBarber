@@ -3,11 +3,10 @@
 //  This is a model of the "The Sleeping Barber" problem using Groovy (http://groovy.codehaus.org) and GPars
 //  (http://gpars.codehaus.org) dataflow, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010–2012 Russel Winder
+//  Copyright © 2010–2013  Russel Winder
 
 import groovy.transform.Immutable
 
-@Grab('org.codehaus.gpars:gpars:1.0-SNAPSHOT')
 import groovyx.gpars.dataflow.Dataflow
 import groovyx.gpars.dataflow.DataflowQueue
 
@@ -21,7 +20,7 @@ def runSimulation(final int numberOfCustomers, final int numberOfWaitingSeats,
   def barberToShop = new DataflowQueue()
   def shopToWorld = new DataflowQueue()
   final barber = Dataflow.task {
-      while (true) {
+    while (true) {
       def customer = shopToBarber.val
       assert customer instanceof Customer
       println("Barber: Starting Customer ${customer.id}.")
@@ -32,8 +31,8 @@ def runSimulation(final int numberOfCustomers, final int numberOfWaitingSeats,
   }
   final shop = Dataflow.task {
     def seatsTaken = 0
+    def selector = Dataflow.select(barberToShop, worldToShop)
     while (true) {
-      def selector = Dataflow.select(barberToShop, worldToShop)
       def item = selector.select()
       switch (item.index) {
        case 0: //////// From the Barber ////////

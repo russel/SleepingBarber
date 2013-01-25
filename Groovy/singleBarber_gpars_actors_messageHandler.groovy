@@ -3,7 +3,7 @@
 //  This is a model of the "The Sleeping Barber" problem using Groovy (http://groovy.codehaus.org) and GPars
 //  (http://gpars.codehaus.org) actors, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2009–2012 Russel Winder
+//  Copyright © 2009–2013  Russel Winder
 //
 //  The barber sleeping is modelled by the barber actor blocking awaiting a message.  The barber's chairs
 //  are modelled by the barber actor message queue.  As the queue is an arbitrary length list, the shop
@@ -11,7 +11,6 @@
 
 import groovy.transform.Immutable
 
-@Grab('org.codehaus.gpars:gpars:1.0-SNAPSHOT')
 import groovyx.gpars.group.DefaultPGroup
 
 @Immutable class Customer { Integer id }
@@ -21,7 +20,7 @@ def runSimulation(final int numberOfCustomers, final int numberOfWaitingSeats,
                     final Closure hairTrimTime, final Closure nextCustomerWaitTime) {
   def group = new DefaultPGroup()
   def world // Just to have the variable so it can be used.
-  def barber = group.reactor { customer ->
+  def barber = group.reactor {customer ->
     assert customer instanceof Customer
     println("Barber: Starting Customer ${customer.id}.")
     Thread.sleep(hairTrimTime())

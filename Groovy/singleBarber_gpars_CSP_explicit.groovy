@@ -4,7 +4,7 @@
 //  Groovy CSP (a part of GPars, http://gpars.codehaus.org),
 //  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 //
-//  Copyright © 2010–2012 Russel Winder
+//  Copyright © 2010–2013  Russel Winder
 //
 //  Everything here is modelled using a process.  The waiting queue is modelled by having an n-place buffer
 //  in the channel between the shop and the barber.
@@ -18,7 +18,6 @@ import org.jcsp.util.Buffer
 import org.jcsp.lang.Channel
 import org.jcsp.lang.CSProcess
 
-@Grab('org.codehaus.gpars:gpars:1.0-SNAPSHOT')
 import groovyx.gpars.csp.PAR
 import groovyx.gpars.csp.ALT
 
@@ -58,7 +57,7 @@ class Shop implements CSProcess {
     this.numberOfWaitingSeats = numberOfWaitingSeats
   }
   @Override public void run() {
-    final selector = new ALT([ fromBarberChannel, fromWorldChannel ])
+    final selector = new ALT([fromBarberChannel, fromWorldChannel])
     def seatsTaken = 0
     def customersTurnedAway = 0
     def customersTrimmed = 0
