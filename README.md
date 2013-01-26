@@ -1,4 +1,4 @@
-= Sleeping Barber
+# Sleeping Barber
 
 _The Sleeping Barber Problem_ is a problem original posed by Edsgar Dijkstra to model a problem in process
 management within operating systems. The
