@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding:utf-8; -*-
 
 #  This is a model of the "The Sleeping Barber" problem using Python (http://www.python.org) and Python-CSP

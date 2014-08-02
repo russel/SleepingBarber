@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
-# -*- coding:utf-8; -*-
 
 #  This is a model of the "The Sleeping Barber" problem using Python (http://www.python.org) and the
 #  mulitprocessing package, cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
 #
-#  Copyright © 2009–2012 Russel Winder
+#  Copyright © 2009–2012, 2014  Russel Winder
 
 #  The barber's shop is modelled as a process with a queue, it receives events from the outside world
 #  (new customers arriving) and from the barbers (customers with fully trimmed barnets).  The waiting chairs
@@ -42,7 +41,7 @@ _closed = 'closed'
 
 class Barber(multiprocessing.Process):
     def __init__(self, shop, identity, hairTrimTime):
-        super(Barber, self).__init__()
+        super().__init__()
         self.shop = shop
         self.identity = identity
         self.hairTrimTime = hairTrimTime
@@ -64,7 +63,7 @@ class BarbersShop(multiprocessing.Process):
     def __init__(self, waitingSeatCount, barberCount, hairTrimTime):
         assert waitingSeatCount > 0, 'Cannot have 0 or less waiting seats'
         assert barberCount > 0, 'Must have some barbers"'
-        super(BarbersShop, self).__init__()
+        super().__init__()
         self.queue = multiprocessing.Queue()
         self.waitingSeats = multiprocessing.Queue(waitingSeatCount)
         self.customersArrived = 0

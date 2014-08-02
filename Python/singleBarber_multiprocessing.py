@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-# -*- coding:utf-8; -*-
 
 #  This is a model of the "The Sleeping Barber" problem using Python and the multiprocessing package,
 #  cf. http://en.wikipedia.org/wiki/Sleeping_barber_problem.
@@ -32,7 +31,7 @@ _closed = 'closed'
 
 class Barber(multiprocessing.Process):
     def __init__(self, hairTrimTime):
-        super(Barber, self).__init__()
+        super().__init__()
         self.shop = None  # This value will be injected after construction.
         self.hairTrimTime = hairTrimTime
 
@@ -55,7 +54,7 @@ class Barber(multiprocessing.Process):
 
 class Shop(multiprocessing.Process):
     def __init__(self, numberOfWaitingSeats, barber, world):
-        super(Shop, self).__init__()
+        super().__init__()
         self.waitingSeats = multiprocessing.Queue(numberOfWaitingSeats)
         self.barber = barber
         self.world = world
@@ -90,7 +89,7 @@ class Shop(multiprocessing.Process):
 
 class World(multiprocessing.Process):
     def __init__(self):
-        super(World, self).__init__()
+        super().__init__()
         self.queue = multiprocessing.Queue()
 
     def run(self):
